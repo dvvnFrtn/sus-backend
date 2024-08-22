@@ -16,7 +16,7 @@ func GenerateToken(payload sqlc.User) (string, error) {
 	var exp time.Duration
 	exp, err := time.ParseDuration(expStr)
 	if expStr == "" || err != nil {
-		exp = time.Hour * 1
+		exp = time.Hour * 3
 	}
 	tokenJwtSementara := jwt.NewWithClaims(jwt.SigningMethodHS256, dto.NewUserClaims(payload.ID, payload.Role, exp))
 	tokenJwt, err := tokenJwtSementara.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
@@ -24,6 +24,21 @@ func GenerateToken(payload sqlc.User) (string, error) {
 		return "", err
 	}
 	return tokenJwt, nil
+}
+
+func GenerateConfirmationToken(payload dto.UserCreateReq) (string, error) {
+	expStr := os.Getenv("JWT_EXP")
+	var exp time.Duration
+	exp, err := time.ParseDuration(expStr)
+	if expStr == "" || err != nil {
+		exp = time.Hour * 3
+	}
+	tokenTemp := jwt.NewWithClaims(jwt.SigningMethodHS256, dto.NewRegistrationClaims(payload.Email, payload.Password, payload.Phone, exp))
+	token, err := tokenTemp.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 func DecodeToken(signedToken string, ptrClaims jwt.Claims, KEY string) error {

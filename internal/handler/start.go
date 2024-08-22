@@ -12,6 +12,9 @@ import (
 func route(r *gin.Engine, uh *UserHandler) {
 	r.GET("/auth/google/login-w-google", uh.LoginWithGoogle)
 	r.GET("/auth/google/callback", uh.GetGoogleDetails)
+	r.POST("/register", uh.RegisterUser)
+	r.GET("/account-confirm", uh.CreateConfirmedUser)
+	r.POST("/login", uh.Login)
 }
 
 func InitHandler(db *sql.DB) *UserHandler {

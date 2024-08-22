@@ -19,3 +19,10 @@ func FailOrError(c *gin.Context, httpCode int, msg string, err error) {
 		},
 	})
 }
+
+func ErrorEmptyField(c *gin.Context) {
+	c.JSON(400, gin.H{
+		"status":  "fail",
+		"message": "Please fill the empty field",
+	})
+}
