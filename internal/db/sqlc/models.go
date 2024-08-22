@@ -9,10 +9,18 @@ import (
 )
 
 type User struct {
-	ID       string
-	Email    string
-	Password sql.NullString
-	OauthID  sql.NullString
-	Name     string
-	Role     string
+	ID          string
+	Email       string
+	Password    sql.NullString
+	OauthID     sql.NullString
+	Name        string
+	Role        string
+	Phone       sql.NullString
+	Img         sql.NullString
+	IsPremium   sql.NullBool
+	Lvl         sql.NullInt32
+	Dob         sql.NullTime
+	Institution sql.NullString
+	CreatedAt   sql.NullTime
+	UpdatedAt   sql.NullTime
 }

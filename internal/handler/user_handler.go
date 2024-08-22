@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"sus-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -81,18 +83,118 @@ func (h *UserHandler) GetGoogleDetails(c *gin.Context) {
 		return
 	}
 
-	// isExist, err := h.service.EmailExists(container.Email)
-	// if err != nil {
-	// 	response.FailOrError(c, 500, "failed checking email", err)
-	// }
-	// if !isExist {
-	// 	input := dto.UserCreateReq{
-	// 		Email:    container.Email,
-	// 		Password: "",
-	// 		Name:     container.Name,
-	// 	}
-	// 	h.service.AddUser(input)
-	// }
+	isExist, err := h.serv.EmailExists(container.Email)
+	if err != nil {
+		response.FailOrError(c, 500, "failed checking email", err)
+	}
+	if !isExist {
+		input := dto.UserCreateReq{
+			Email:    container.Email,
+			Password: "",
+			Phone:    "",
+		}
+		h.serv.RegisterUserFromGoogle(input)
+	}
 
-	response.Success(c, 200, "success", container)
+	data, err := h.serv.GenerateToken(container.Email)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed generating token", err)
+		return
+	}
+	response.Success(c, 200, "success", gin.H{"token": data})
+}
+
+func (h *UserHandler) RegisterUser(c *gin.Context) {
+	email := c.PostForm("email")
+	if email == "" {
+		response.ErrorEmptyField(c)
+		return
+	}
+	isExist, err := h.serv.EmailExists(email)
+	if err != nil {
+		response.FailOrError(c, 500, "failed checking email", err)
+		return
+	}
+	if isExist {
+		response.FailOrError(c, 400, "email has been used", err)
+		return
+	}
+
+	password := c.PostForm("password")
+	if password == "" {
+		response.ErrorEmptyField(c)
+		return
+	}
+	password_konfirm := c.PostForm("password_konfirm")
+	if password_konfirm != password {
+		response.FailOrError(c, 400, "failed creating user", errors.New("konfirmasi password gagal"))
+		return
+	}
+
+	phone := c.PostForm("phone")
+
+	request := dto.UserCreateReq{
+		Email:    email,
+		Password: password,
+		Phone:    phone,
+	}
+
+	user, err := h.serv.RegisterUser(request)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed hasshing password", err)
+		return
+	}
+
+	if err = h.serv.SendConfirmationEmail(user); err != nil {
+		response.FailOrError(c, 500, "Failed sending confirmation email", err)
+		return
+	}
+	response.Success(c, 200, "Success sending confirmation email", nil)
+}
+
+func (h *UserHandler) CreateConfirmedUser(c *gin.Context) {
+	tokenTemp := c.Query("token")
+	claims := &dto.RegisterClaims{}
+	token, err := jwt.ParseWithClaims(tokenTemp, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET_KEY")), nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	input := dto.UserCreateReq{
+		Email:    claims.Email,
+		Password: claims.HPassword,
+		Phone:    claims.Phone,
+	}
+
+	_, err = h.serv.CreateUser(input)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed creating user", err)
+		return
+	}
+	response.Success(c, 201, "Success creating user", input)
+}
+
+func (h *UserHandler) Login(c *gin.Context) {
+	email := c.PostForm("email")
+	if email == "" {
+		response.ErrorEmptyField(c)
+		return
+	}
+	password := c.PostForm("password")
+
+	req := dto.UserLoginReq{
+		Email:    email,
+		Password: password,
+	}
+
+	data, err := h.serv.Login(req)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed login", err)
+		return
+	}
+	response.Success(c, 200, "Login succeed", gin.H{"token": data})
 }
