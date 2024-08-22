@@ -1,0 +1,9 @@
+ALTER TABLE users
+    DROP COLUMN phone,
+    DROP COLUMN image,
+    DROP COLUMN is_premium,
+    DROP COLUMN level,
+    DROP COLUMN dob,
+    DROP COLUMN institution,
+    DROP COLUMN created_at,
+    DROP COLUMN updated_at;
