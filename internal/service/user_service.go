@@ -22,9 +22,9 @@ import (
 type UserService interface {
 	EmailExists(string) (bool, error)
 	RegisterUser(dto.UserCreateReq) (dto.UserCreateReq, error)
-	SendConfirmationEmail(dto.UserCreateReq) error
-	RegisterUserFromGoogle(dto.UserCreateReq) (sql.Result, error)
-	CreateUser(dto.UserCreateReq) (sql.Result, error)
+	SendConfirmationEmail(dto.UserCreateReq) (dto.UserCreateResp, error)
+	RegisterUserFromGoogle(string) (dto.UserCreateResp, error)
+	CreateUser(dto.UserCreateReq) (dto.UserCreateResp, error)
 	Login(dto.UserLoginReq) (string, error)
 	GenerateToken(string) (string, error)
 }
@@ -59,16 +59,16 @@ func (s *userService) RegisterUser(arg dto.UserCreateReq) (dto.UserCreateReq, er
 	return input, err
 }
 
-func (s *userService) SendConfirmationEmail(arg dto.UserCreateReq) error {
+func (s *userService) SendConfirmationEmail(arg dto.UserCreateReq) (dto.UserCreateResp, error) {
 	domain := strings.Split(arg.Email, "@")[1]
 	mxRecords, err := net.LookupMX(domain)
 	if err != nil || len(mxRecords) == 0 {
-		return err
+		return dto.UserCreateResp{}, err
 	}
 
 	token, err := jwt.GenerateConfirmationToken(arg)
 	if err != nil {
-		return err
+		return dto.UserCreateResp{}, err
 	}
 
 	link := fmt.Sprintf("%s/account-confirm?token=%s", os.Getenv("BASE_URL"), token)
@@ -88,27 +88,32 @@ func (s *userService) SendConfirmationEmail(arg dto.UserCreateReq) error {
 
 	port, err := strconv.Atoi(smtpPort)
 	if err != nil {
-		return err
+		return dto.UserCreateResp{}, err
 	}
 
 	d := gomail.NewDialer(smtpHost, port, smtpUser, smtpPass)
 	err = d.DialAndSend(m)
 	if err != nil {
-		return err
+		return dto.UserCreateResp{}, err
 	}
-	return nil
+
+	resp := dto.UserCreateResp{
+		Email: arg.Email,
+		Phone: arg.Phone,
+	}
+	return resp, nil
 }
 
-func (s *userService) RegisterUserFromGoogle(arg dto.UserCreateReq) (sql.Result, error) {
+func (s *userService) RegisterUserFromGoogle(email string) (dto.UserCreateResp, error) {
 	input := dto.UserCreateReq{
-		Email:    arg.Email,
-		Password: arg.Password,
-		Phone:    arg.Phone,
+		Email:    email,
+		Password: "",
+		Phone:    "",
 	}
 	return s.CreateUser(input)
 }
 
-func (s *userService) CreateUser(arg dto.UserCreateReq) (sql.Result, error) {
+func (s *userService) CreateUser(arg dto.UserCreateReq) (dto.UserCreateResp, error) {
 	user := sqlc.AddUserParams{
 		ID:          uuid.New().String(),
 		Email:       arg.Email,
@@ -125,7 +130,17 @@ func (s *userService) CreateUser(arg dto.UserCreateReq) (sql.Result, error) {
 		CreatedAt:   sql.NullTime{Time: time.Now()},
 		UpdatedAt:   sql.NullTime{Time: time.Now()},
 	}
-	return s.repo.CreateUser(user)
+
+	_, err := s.repo.CreateUser(user)
+	if err != nil {
+		return dto.UserCreateResp{}, nil
+	}
+
+	resp := dto.UserCreateResp{
+		Email: arg.Email,
+		Phone: arg.Phone,
+	}
+	return resp, nil
 }
 
 func (s *userService) Login(arg dto.UserLoginReq) (string, error) {
