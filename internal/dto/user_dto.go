@@ -21,6 +21,11 @@ type UserCreateReq struct {
 	OauthID  string `json:"oauth_id"`
 }
 
+type UserCreateResp struct {
+	Email string `json:"email"`
+	Phone string `json:"phone"`
+}
+
 type UserLoginReq struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -59,12 +64,3 @@ func NewRegistrationClaims(email string, pass string, phone string, exp time.Dur
 		},
 	}
 }
-
-// func (c *RegisterClaims) Valid() error {
-// 	// Implementasikan validasi klaim jika diperlukan
-// 	// Misalnya, memeriksa apakah email tidak kosong
-// 	if c.Email == "" || c.HPassword == "" || c.Phone == "" {
-// 		return fmt.Errorf("invalid claims")
-// 	}
-// 	return nil
-// }
