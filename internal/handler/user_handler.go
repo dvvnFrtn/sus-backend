@@ -46,6 +46,7 @@ func (*UserHandler) LoginWithGoogle(c *gin.Context) {
 
 	fmt.Println("url = " + authURL)
 
+	// temporary with string
 	c.String(http.StatusOK, authURL)
 }
 
@@ -88,12 +89,7 @@ func (h *UserHandler) GetGoogleDetails(c *gin.Context) {
 		response.FailOrError(c, 500, "failed checking email", err)
 	}
 	if !isExist {
-		input := dto.UserCreateReq{
-			Email:    container.Email,
-			Password: "",
-			Phone:    "",
-		}
-		h.serv.RegisterUserFromGoogle(input)
+		h.serv.RegisterUserFromGoogle(container.Email)
 	}
 
 	data, err := h.serv.GenerateToken(container.Email)
@@ -145,11 +141,12 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	if err = h.serv.SendConfirmationEmail(user); err != nil {
+	resp, err := h.serv.SendConfirmationEmail(user)
+	if err != nil {
 		response.FailOrError(c, 500, "Failed sending confirmation email", err)
 		return
 	}
-	response.Success(c, 200, "Success sending confirmation email", nil)
+	response.Success(c, 200, "Success sending confirmation email", resp)
 }
 
 func (h *UserHandler) CreateConfirmedUser(c *gin.Context) {
@@ -170,12 +167,12 @@ func (h *UserHandler) CreateConfirmedUser(c *gin.Context) {
 		Phone:    claims.Phone,
 	}
 
-	_, err = h.serv.CreateUser(input)
+	resp, err := h.serv.CreateUser(input)
 	if err != nil {
 		response.FailOrError(c, 500, "Failed creating user", err)
 		return
 	}
-	response.Success(c, 201, "Success creating user", input)
+	response.Success(c, 201, "Success creating user", resp)
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
