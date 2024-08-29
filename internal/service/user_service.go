@@ -1,8 +1,10 @@
 package service
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"fmt"
+	"math/big"
 	"net"
 	"os"
 	"strconv"
@@ -23,10 +25,12 @@ type UserService interface {
 	EmailExists(string) (bool, error)
 	RegisterUser(dto.UserCreateReq) (dto.UserCreateReq, error)
 	SendConfirmationEmail(dto.UserCreateReq) (dto.UserCreateResp, error)
-	RegisterUserFromGoogle(string) (dto.UserCreateResp, error)
-	CreateUser(dto.UserCreateReq) (dto.UserCreateResp, error)
+	RegisterUserFromGoogle(string) (*dto.ResponseID, error)
+	CreateUser(dto.UserCreateReq) (*dto.ResponseID, error)
 	Login(dto.UserLoginReq) (string, error)
 	GenerateToken(string) (string, error)
+	FindUserByID(string) (*dto.UserResponse, error)
+	UpdateUser(dto.UserUpdateReq) (*dto.UserUpdateReq, error)
 }
 
 type userService struct {
@@ -104,7 +108,7 @@ func (s *userService) SendConfirmationEmail(arg dto.UserCreateReq) (dto.UserCrea
 	return resp, nil
 }
 
-func (s *userService) RegisterUserFromGoogle(email string) (dto.UserCreateResp, error) {
+func (s *userService) RegisterUserFromGoogle(email string) (*dto.ResponseID, error) {
 	input := dto.UserCreateReq{
 		Email:    email,
 		Password: "",
@@ -113,15 +117,20 @@ func (s *userService) RegisterUserFromGoogle(email string) (dto.UserCreateResp, 
 	return s.CreateUser(input)
 }
 
-func (s *userService) CreateUser(arg dto.UserCreateReq) (dto.UserCreateResp, error) {
+func (s *userService) CreateUser(arg dto.UserCreateReq) (*dto.ResponseID, error) {
+	n, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return nil, err
+	}
 	user := sqlc.AddUserParams{
 		ID:          uuid.New().String(),
 		Email:       arg.Email,
 		Password:    sql.NullString{String: arg.Password, Valid: arg.Password != ""},
 		OauthID:     sql.NullString{String: arg.OauthID, Valid: arg.OauthID != ""},
 		Phone:       sql.NullString{String: arg.Phone, Valid: arg.Phone != ""},
-		Name:        "User",
+		Name:        "User" + n.String(),
 		Role:        "user",
+		Address:     sql.NullString{},
 		Img:         sql.NullString{},
 		IsPremium:   sql.NullBool{Bool: false, Valid: true},
 		Lvl:         sql.NullInt32{Int32: 1, Valid: true},
@@ -131,16 +140,12 @@ func (s *userService) CreateUser(arg dto.UserCreateReq) (dto.UserCreateResp, err
 		UpdatedAt:   sql.NullTime{Time: time.Now()},
 	}
 
-	_, err := s.repo.CreateUser(user)
+	_, err = s.repo.CreateUser(user)
 	if err != nil {
-		return dto.UserCreateResp{}, nil
+		return nil, err
 	}
 
-	resp := dto.UserCreateResp{
-		Email: arg.Email,
-		Phone: arg.Phone,
-	}
-	return resp, nil
+	return &dto.ResponseID{ID: user.ID}, nil
 }
 
 func (s *userService) Login(arg dto.UserLoginReq) (string, error) {
@@ -172,4 +177,33 @@ func (s *userService) GenerateToken(email string) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+func (s *userService) FindUserByID(id string) (*dto.UserResponse, error) {
+	user, err := s.repo.FindUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.ToUserResponse(&user), nil
+}
+
+func (s *userService) UpdateUser(arg dto.UserUpdateReq) (*dto.UserUpdateReq, error) {
+	dob, err := time.Parse("2006-01-02", arg.DOB)
+	if err != nil {
+		return nil, err
+	}
+	input := sqlc.UpdateUserByIDParams{
+		Username:    sql.NullString{String: arg.Username, Valid: arg.Username != ""},
+		Name:        arg.Name,
+		Address:     sql.NullString{String: arg.Address, Valid: arg.Address != ""},
+		Dob:         sql.NullTime{Time: dob, Valid: !dob.IsZero()},
+		Institution: sql.NullString{String: arg.Institution, Valid: arg.Institution != ""},
+		ID:          "",
+	}
+	_, err = s.repo.UpdateUser(input)
+	if err != nil {
+		return nil, err
+	}
+	return &arg, nil
 }
