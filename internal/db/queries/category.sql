@@ -9,3 +9,6 @@ WHERE category_id = ? AND user_id = ?;
 -- name: CreateUserCategory :execresult
 INSERT INTO user_categories (category_id, user_id)
 VALUES (?, ?);
+
+-- name: GetCategories :many
+SELECT * FROM categories;
