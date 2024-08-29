@@ -176,16 +176,10 @@ func (h *UserHandler) CreateConfirmedUser(c *gin.Context) {
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
-	email := c.PostForm("email")
-	if email == "" {
-		response.ErrorEmptyField(c)
+	var req dto.UserLoginReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailOrError(c, 400, "Bad request", err)
 		return
-	}
-	password := c.PostForm("password")
-
-	req := dto.UserLoginReq{
-		Email:    email,
-		Password: password,
 	}
 
 	data, err := h.serv.Login(req)
@@ -223,4 +217,24 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 	response.Success(c, 200, "Success updating user", resp)
+}
+
+func (h *UserHandler) AddUserCategory(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+
+	var jsonData struct {
+		IDs []string `json:"category_ids"`
+	}
+	if err := c.ShouldBindJSON(&jsonData); err != nil {
+		response.FailOrError(c, 400, "Bad request", err)
+		return
+	}
+
+	err := h.serv.AddUserCategory(claims.ID, jsonData.IDs)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed adding user-categories", err)
+		return
+	}
+	response.Success(c, 201, "Success adding user-categories", nil)
 }

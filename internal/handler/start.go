@@ -18,6 +18,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler) {
 	r.POST("/login", uh.Login)
 	r.GET("/users/:id", uh.FindUserByID)
 	r.PUT("/users", middleware.ValidateToken("user"), uh.UpdateUser)
+	r.POST("/user-categories", middleware.ValidateToken("user"), uh.AddUserCategory)
 
 	r.POST("/organizations", oh.CreateOrganization)
 	r.GET("/organizations/:id", oh.FindOrganizationById)

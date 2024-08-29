@@ -8,6 +8,12 @@ import (
 	"database/sql"
 )
 
+type Category struct {
+	ID           string
+	CategoryName string
+	CreatedAt    sql.NullTime
+}
+
 type Organization struct {
 	ID          string
 	Name        string
@@ -35,4 +41,11 @@ type User struct {
 	UpdatedAt   sql.NullTime
 	Username    sql.NullString
 	Address     sql.NullString
+}
+
+type UserCategory struct {
+	ID         int32
+	CategoryID string
+	UserID     string
+	CreatedAt  sql.NullTime
 }

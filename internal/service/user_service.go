@@ -31,6 +31,7 @@ type UserService interface {
 	GenerateToken(string) (string, error)
 	FindUserByID(string) (*dto.UserResponse, error)
 	UpdateUser(string, dto.UserUpdateReq) (*dto.UserUpdateReq, error)
+	AddUserCategory(string, []string) error
 }
 
 type userService struct {
@@ -206,4 +207,28 @@ func (s *userService) UpdateUser(id string, arg dto.UserUpdateReq) (*dto.UserUpd
 		return nil, err
 	}
 	return &arg, nil
+}
+
+func (s *userService) AddUserCategory(u_id string, cat_ids []string) error {
+	for _, cat_id := range cat_ids {
+		check := sqlc.UserCategoryExistsParams{
+			CategoryID: cat_id,
+			UserID:     u_id,
+		}
+		count, err := s.repo.UserCategoryExists(check)
+		if err != nil {
+			return err
+		}
+		if count > 0 {
+			continue
+		}
+
+		input := sqlc.CreateUserCategoryParams(check)
+
+		_, err = s.repo.AddUserCategory(input)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
