@@ -41,19 +41,21 @@ func GenerateConfirmationToken(payload dto.UserCreateReq) (string, error) {
 	return token, nil
 }
 
-func DecodeToken(signedToken string, ptrClaims jwt.Claims, KEY string) error {
-	token, err := jwt.ParseWithClaims(signedToken, ptrClaims, func(t *jwt.Token) (interface{}, error) {
+func DecodeToken(signedToken string) (*dto.UserClaims, error) {
+	dcd, err := jwt.ParseWithClaims(signedToken, &dto.UserClaims{}, func(t *jwt.Token) (interface{}, error) {
 		_, ok := t.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return "", errors.New("wrong signging method")
 		}
-		return []byte(KEY), nil
+		return []byte(os.Getenv("JWT_SECRET_KEY")), nil
 	})
 	if err != nil {
-		return fmt.Errorf("token has been tampered with")
+		return nil, fmt.Errorf("token has been tampered with")
 	}
-	if !token.Valid {
-		return fmt.Errorf("invalid token")
+	if !dcd.Valid {
+		return nil, fmt.Errorf("invalid token")
 	}
-	return nil
+	claims := dcd.Claims.(*dto.UserClaims)
+
+	return claims, nil
 }

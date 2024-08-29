@@ -208,13 +208,16 @@ func (h *UserHandler) FindUserByID(c *gin.Context) {
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+
 	var req dto.UserUpdateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailOrError(c, 400, "Bad request", err)
 		return
 	}
 
-	resp, err := h.serv.UpdateUser(req)
+	resp, err := h.serv.UpdateUser(claims.ID, req)
 	if err != nil {
 		response.FailOrError(c, 500, "Failed updating user", err)
 		return
