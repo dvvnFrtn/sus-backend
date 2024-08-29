@@ -195,3 +195,29 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 	response.Success(c, 200, "Login succeed", gin.H{"token": data})
 }
+
+func (h *UserHandler) FindUserByID(c *gin.Context) {
+	idReq := c.Param("id")
+	user, err := h.serv.FindUserByID(idReq)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed getting user", err)
+		return
+	}
+
+	response.Success(c, 200, "Success getting user", user)
+}
+
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	var req dto.UserUpdateReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailOrError(c, 400, "Bad request", err)
+		return
+	}
+
+	resp, err := h.serv.UpdateUser(req)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed updating user", err)
+		return
+	}
+	response.Success(c, 200, "Success updating user", resp)
+}

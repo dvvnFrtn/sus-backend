@@ -15,6 +15,8 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler) {
 	r.POST("/register", uh.RegisterUser)
 	r.GET("/account-confirm", uh.CreateConfirmedUser)
 	r.POST("/login", uh.Login)
+	r.GET("/users/:id", uh.FindUserByID)
+	r.PUT("/users/:id", uh.UpdateUser)
 
 	r.POST("/organizations", oh.CreateOrganization)
 	r.GET("/organizations/:id", oh.FindOrganizationById)
