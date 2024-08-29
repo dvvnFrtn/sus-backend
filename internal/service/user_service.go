@@ -30,7 +30,7 @@ type UserService interface {
 	Login(dto.UserLoginReq) (string, error)
 	GenerateToken(string) (string, error)
 	FindUserByID(string) (*dto.UserResponse, error)
-	UpdateUser(dto.UserUpdateReq) (*dto.UserUpdateReq, error)
+	UpdateUser(string, dto.UserUpdateReq) (*dto.UserUpdateReq, error)
 }
 
 type userService struct {
@@ -188,7 +188,7 @@ func (s *userService) FindUserByID(id string) (*dto.UserResponse, error) {
 	return dto.ToUserResponse(&user), nil
 }
 
-func (s *userService) UpdateUser(arg dto.UserUpdateReq) (*dto.UserUpdateReq, error) {
+func (s *userService) UpdateUser(id string, arg dto.UserUpdateReq) (*dto.UserUpdateReq, error) {
 	dob, err := time.Parse("2006-01-02", arg.DOB)
 	if err != nil {
 		return nil, err
@@ -199,7 +199,7 @@ func (s *userService) UpdateUser(arg dto.UserUpdateReq) (*dto.UserUpdateReq, err
 		Address:     sql.NullString{String: arg.Address, Valid: arg.Address != ""},
 		Dob:         sql.NullTime{Time: dob, Valid: !dob.IsZero()},
 		Institution: sql.NullString{String: arg.Institution, Valid: arg.Institution != ""},
-		ID:          "",
+		ID:          id,
 	}
 	_, err = s.repo.UpdateUser(input)
 	if err != nil {
