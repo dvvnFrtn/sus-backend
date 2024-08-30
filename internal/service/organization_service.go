@@ -17,6 +17,7 @@ type OrganizationService interface {
 	ListAllOrganizations() ([]dto.OrganizationResponse, error)
 	UpdateOrganization(string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
 	DeleteOrganization(string) error
+	GetCategories() ([]sqlc.Category, error)
 }
 
 type organizationService struct {
@@ -93,4 +94,12 @@ func (s *organizationService) DeleteOrganization(id string) error {
 	}
 
 	return nil
+}
+
+func (s *organizationService) GetCategories() ([]sqlc.Category, error) {
+	categories, err := s.repo.GetCategories()
+	if err != nil {
+		return nil, err
+	}
+	return categories, nil
 }

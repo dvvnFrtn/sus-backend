@@ -85,3 +85,12 @@ func (h *OrganizationHandler) DeleteOrganization(c *gin.Context) {
 
 	response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
 }
+
+func (h *OrganizationHandler) GetCategories(c *gin.Context) {
+	data, err := h.serv.GetCategories()
+	if err != nil {
+		response.FailOrError(c, 500, "Failed getting categories", err)
+		return
+	}
+	response.Success(c, 200, "Success getting categories", data)
+}

@@ -12,3 +12,8 @@ VALUES (?, ?);
 
 -- name: GetCategories :many
 SELECT * FROM categories;
+
+-- name: GetCategoriesForUser :many
+SELECT categories.id, category_name, categories.created_at FROM categories
+LEFT JOIN user_categories ON categories.id = category_id
+WHERE user_id = ?;

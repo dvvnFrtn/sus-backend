@@ -25,6 +25,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler) {
 	r.GET("/organizations", oh.ListAllOrganizations)
 	r.PUT("/organizations/:id", oh.UpdateOrganizations)
 	r.DELETE("/organizations/:id", oh.DeleteOrganization)
+	r.GET("organizations/categories", oh.GetCategories)
 }
 
 func InitHandler(db *sql.DB) (*UserHandler, *OrganizationHandler) {

@@ -65,6 +65,35 @@ func (q *Queries) GetCategories(ctx context.Context) ([]Category, error) {
 	return items, nil
 }
 
+const getCategoriesForUser = `-- name: GetCategoriesForUser :many
+SELECT categories.id, category_name, categories.created_at FROM categories
+LEFT JOIN user_categories ON categories.id = category_id
+WHERE user_id = ?
+`
+
+func (q *Queries) GetCategoriesForUser(ctx context.Context, userID string) ([]Category, error) {
+	rows, err := q.db.QueryContext(ctx, getCategoriesForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Category
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(&i.ID, &i.CategoryName, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const userCategoryExists = `-- name: UserCategoryExists :one
 SELECT COUNT(1) from user_categories
 WHERE category_id = ? AND user_id = ?
