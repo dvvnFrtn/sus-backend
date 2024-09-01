@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Category struct {
@@ -14,12 +15,47 @@ type Category struct {
 	CreatedAt    sql.NullTime
 }
 
+type Event struct {
+	ID             string
+	OrganizationID string
+	Title          string
+	Img            sql.NullString
+	Description    sql.NullString
+	Registrant     sql.NullInt32
+	MaxRegistrant  sql.NullInt32
+	Date           time.Time
+	StartTime      sql.NullTime
+	EndTime        sql.NullTime
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
+type EventPricing struct {
+	ID        int64
+	EventID   string
+	EventType sql.NullString
+	Price     sql.NullInt32
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
 type Organization struct {
 	ID          string
 	Name        string
 	Description string
 	HeaderImg   sql.NullString
 	ProfileImg  sql.NullString
+	CreatedAt   sql.NullTime
+	UpdatedAt   sql.NullTime
+}
+
+type Speaker struct {
+	ID          string
+	Name        string
+	Title       sql.NullString
+	Img         sql.NullString
+	Description sql.NullString
+	EventID     sql.NullString
 	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
 }
