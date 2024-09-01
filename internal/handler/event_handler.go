@@ -17,12 +17,27 @@ func NewEventHandler(s service.EventService) *EventHandler {
 }
 
 func (h *EventHandler) GetEvents(c *gin.Context) {
-	data, err := h.serv.GetEvents()
-	if err != nil {
-		response.FailOrError(c, 500, "Failed getting events", err)
-		return
+	var req dto.RequestIDs
+	_ = c.ShouldBindJSON(&req)
+
+	var result []dto.EventResponse
+	if req.IDs != nil {
+		data, err := h.serv.GetEventsByCategory(req.IDs)
+		if err != nil {
+			response.FailOrError(c, 500, "Failed getting events", err)
+			return
+		}
+		result = data
+	} else {
+		data, err := h.serv.GetEvents()
+		if err != nil {
+			response.FailOrError(c, 500, "Failed getting events", err)
+			return
+		}
+		result = data
 	}
-	response.Success(c, 200, "Success getting events", data)
+
+	response.Success(c, 200, "Success getting events", result)
 }
 
 func (h *EventHandler) GetEventByID(c *gin.Context) {
@@ -51,4 +66,17 @@ func (h *EventHandler) AddEvent(c *gin.Context) {
 		return
 	}
 	response.Success(c, 201, "Success creating event", resp)
+}
+
+func (h *EventHandler) DeleteEvent(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+
+	idReq := c.Param("id")
+	err := h.serv.DeleteEvent(idReq, claims.ID)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed deleting event", err)
+		return
+	}
+	response.Success(c, 200, "Success deleting event", nil)
 }

@@ -29,6 +29,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, eh *EventHan
 	r.GET("/events", eh.GetEvents)
 	r.GET("/events/:id", eh.GetEventByID)
 	r.POST("/events", middleware.ValidateToken("organization"), eh.AddEvent)
+	r.DELETE("events/:id", middleware.ValidateToken("organization"), eh.DeleteEvent)
 }
 
 func InitHandler(db *sql.DB) (*UserHandler, *OrganizationHandler, *EventHandler) {

@@ -42,6 +42,16 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (sql.R
 	)
 }
 
+const deleteEvent = `-- name: DeleteEvent :exec
+DELETE FROM events
+WHERE id = ?
+`
+
+func (q *Queries) DeleteEvent(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteEvent, id)
+	return err
+}
+
 const getEventByID = `-- name: GetEventByID :one
 SELECT id, organization_id, title, img, description, registrant, max_registrant, date, start_time, end_time, created_at, updated_at FROM events WHERE id = ?
 `
@@ -72,6 +82,48 @@ SELECT id, organization_id, title, img, description, registrant, max_registrant,
 
 func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 	rows, err := q.db.QueryContext(ctx, getEvents)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.Title,
+			&i.Img,
+			&i.Description,
+			&i.Registrant,
+			&i.MaxRegistrant,
+			&i.Date,
+			&i.StartTime,
+			&i.EndTime,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsByCategory = `-- name: GetEventsByCategory :many
+SELECT events.id, events.organization_id, events.title, events.img, events.description, events.registrant, events.max_registrant, events.date, events.start_time, events.end_time, events.created_at, events.updated_at FROM events
+INNER JOIN user_categories ON user_id = organization_id
+WHERE category_id = ?
+`
+
+func (q *Queries) GetEventsByCategory(ctx context.Context, categoryID string) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsByCategory, categoryID)
 	if err != nil {
 		return nil, err
 	}

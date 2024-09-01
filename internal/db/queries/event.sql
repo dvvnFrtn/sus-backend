@@ -11,3 +11,10 @@ SELECT * FROM events WHERE id = ?;
 SELECT * FROM events;
 
 -- name: GetEventsByCategory :many
+SELECT events.* FROM events
+INNER JOIN user_categories ON user_id = organization_id
+WHERE FIND_IN_SET(category_id, ?);
+
+-- name: DeleteEvent :exec
+DELETE FROM events
+WHERE id = ?;

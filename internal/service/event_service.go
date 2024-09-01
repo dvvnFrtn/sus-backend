@@ -2,7 +2,9 @@ package service
 
 import (
 	"database/sql"
+	"errors"
 	"log"
+	"strings"
 	"sus-backend/internal/db/sqlc"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/repository"
@@ -13,8 +15,10 @@ import (
 
 type EventService interface {
 	GetEvents() ([]dto.EventResponse, error)
+	GetEventsByCategory([]string) ([]dto.EventResponse, error)
 	GetEventByID(string) (*dto.EventResponse, error)
 	CreateEvent(string, dto.CreateEventReq) (*dto.ResponseID, error)
+	DeleteEvent(string, string) error
 }
 
 type eventService struct {
@@ -77,4 +81,30 @@ func (s *eventService) CreateEvent(id string, arg dto.CreateEventReq) (*dto.Resp
 		return nil, err
 	}
 	return &dto.ResponseID{ID: input.ID}, nil
+}
+
+func (s *eventService) GetEventsByCategory(ids []string) ([]dto.EventResponse, error) {
+	ctg_ids := strings.Join(ids, ",")
+
+	var events []sqlc.Event
+	data, err := s.repo.GetEventsByCategory(ctg_ids)
+	if err != nil {
+		return nil, err
+	}
+	events = append(events, data...)
+
+	return dto.ToEventResponses(&events), nil
+}
+
+func (s *eventService) DeleteEvent(id string, org_id string) error {
+	event, err := s.repo.GetEventByID(id)
+	if err != nil {
+		return err
+	}
+
+	if event.OrganizationID != org_id {
+		return errors.New("access denied, event does not belong to user")
+	}
+	err = s.repo.DeleteEvent(id)
+	return err
 }
