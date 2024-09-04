@@ -1,0 +1,3 @@
+ALTER TABLE users
+    ADD COLUMN username VARCHAR(36) UNIQUE AFTER name,
+    ADD COLUMN address VARCHAR(255) NULL AFTER role;

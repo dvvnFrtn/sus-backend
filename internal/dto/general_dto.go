@@ -31,3 +31,7 @@ func NewErrorResponse(msg string, data interface{}) *Response {
 		Data:    data,
 	}
 }
+
+type RequestIDs struct {
+	IDs []string `json:"ids"`
+}
