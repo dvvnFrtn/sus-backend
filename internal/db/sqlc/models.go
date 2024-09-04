@@ -49,6 +49,15 @@ type Organization struct {
 	UpdatedAt   sql.NullTime
 }
 
+type Post struct {
+	ID             string
+	OrganizationID string
+	Content        string
+	ImageContent   sql.NullString
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
 type Speaker struct {
 	ID          string
 	Name        string

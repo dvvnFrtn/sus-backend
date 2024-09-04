@@ -8,7 +8,7 @@ import (
 
 func Success(c *gin.Context, httpCode int, msg string, data interface{}) {
 	c.JSON(httpCode, dto.Response{
-		Status:  "succes",
+		Status:  true,
 		Message: msg,
 		Data:    data,
 	})
@@ -16,7 +16,7 @@ func Success(c *gin.Context, httpCode int, msg string, data interface{}) {
 
 func FailOrError(c *gin.Context, httpCode int, msg string, err error) {
 	c.JSON(httpCode, dto.Response{
-		Status:  "fail",
+		Status:  false,
 		Message: msg,
 		Data:    nil,
 	})

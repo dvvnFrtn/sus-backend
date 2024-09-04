@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, eh *EventHandler) {
+func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHandler, eh *EventHandler) {
 	r.GET("/auth/google/login-w-google", uh.LoginWithGoogle)
 	r.GET("/auth/google/callback", uh.GetGoogleDetails)
 	r.POST("/register", uh.RegisterUser)
@@ -21,10 +21,16 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, eh *EventHan
 	r.POST("/user-categories", middleware.ValidateToken("user"), uh.AddUserCategory)
 
 	r.POST("/organizations", oh.CreateOrganization)
+	r.GET("/organizations/:id/posts", ph.FindPostsByOrganization)
 	r.GET("/organizations/:id", oh.FindOrganizationById)
 	r.GET("/organizations", oh.ListAllOrganizations)
 	r.PUT("/organizations/:id", oh.UpdateOrganizations)
 	r.DELETE("/organizations/:id", oh.DeleteOrganization)
+
+	r.POST("/posts", ph.CreatePost)
+	r.GET("/posts", ph.ListAllPosts)
+	r.GET("/posts/:id", ph.FindPostById)
+	r.DELETE("/posts/:id", ph.DeletePost)
 
 	r.GET("/events", eh.GetEvents)
 	r.GET("/events/:id", eh.GetEventByID)
@@ -32,7 +38,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, eh *EventHan
 	r.DELETE("events/:id", middleware.ValidateToken("organization"), eh.DeleteEvent)
 }
 
-func InitHandler(db *sql.DB) (*UserHandler, *OrganizationHandler, *EventHandler) {
+func InitHandler(db *sql.DB) (*UserHandler, *OrganizationHandler, *PostHandler, *EventHandler) {
 	queries := sqlc.New(db)
 
 	userRepo := repository.NewUserRepository(queries)
@@ -43,14 +49,18 @@ func InitHandler(db *sql.DB) (*UserHandler, *OrganizationHandler, *EventHandler)
 	organizationServ := service.NewOrganizationService(organizationRepo)
 	organizationHand := NewOrganizationHandler(organizationServ)
 
+	postRepo := repository.NewPostRepository(queries)
+	postServ := service.NewPostService(postRepo, organizationServ)
+	postHand := NewPostHandler(postServ)
+
 	eventRepo := repository.NewEventRepository(queries)
 	eventServ := service.NewEventService(eventRepo)
 	eventHand := NewEventHandler(eventServ)
 
-	return userHand, organizationHand, eventHand
+	return userHand, organizationHand, postHand, eventHand
 }
 
 func StartEngine(r *gin.Engine, db *sql.DB) {
-	uh, oh, eh := InitHandler(db)
-	route(r, uh, oh, eh)
+	uh, oh, ph, eh := InitHandler(db)
+	route(r, uh, oh, ph, eh)
 }
