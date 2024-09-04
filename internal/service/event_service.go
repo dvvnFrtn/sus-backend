@@ -41,6 +41,9 @@ func (s *eventService) GetEvents() ([]dto.EventResponse, error) {
 func (s *eventService) GetEventByID(id string) (*dto.EventResponse, error) {
 	event, err := s.repo.GetEventByID(id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("resource not found")
+		}
 		return nil, err
 	}
 
@@ -80,7 +83,7 @@ func (s *eventService) CreateEvent(id string, arg dto.CreateEventReq) (*dto.Resp
 		log.Println(err.Error())
 		return nil, err
 	}
-	return &dto.ResponseID{ID: input.ID}, nil
+	return dto.NewResponseID(input.ID), nil
 }
 
 func (s *eventService) GetEventsByCategory(ids []string) ([]dto.EventResponse, error) {
@@ -99,12 +102,16 @@ func (s *eventService) GetEventsByCategory(ids []string) ([]dto.EventResponse, e
 func (s *eventService) DeleteEvent(id string, org_id string) error {
 	event, err := s.repo.GetEventByID(id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("resource not found")
+		}
 		return err
 	}
 
 	if event.OrganizationID != org_id {
 		return errors.New("access denied, event does not belong to user")
 	}
+
 	err = s.repo.DeleteEvent(id)
 	return err
 }
