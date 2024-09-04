@@ -18,6 +18,15 @@ type Organization struct {
 	UpdatedAt   sql.NullTime
 }
 
+type Post struct {
+	ID             string
+	OrganizationID string
+	Content        string
+	ImageContent   sql.NullString
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
 type User struct {
 	ID          string
 	Email       string
