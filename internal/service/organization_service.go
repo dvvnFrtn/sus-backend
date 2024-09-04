@@ -2,7 +2,7 @@ package service
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 	"sus-backend/internal/db/sqlc"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/repository"
@@ -43,13 +43,15 @@ func (s *organizationService) CreateOrganization(req dto.OrganizationCreateReque
 		return nil, err
 	}
 
-	return &dto.ResponseID{ID: organization.ID}, nil
+	return dto.NewResponseID(organization.ID), nil
 }
 
 func (s *organizationService) FindOrganizationById(id string) (*dto.OrganizationResponse, error) {
 	organization, err := s.repo.FindById(id)
 	if err != nil {
-		fmt.Println(err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("resource_not_found")
+		}
 		return nil, err
 	}
 
@@ -68,6 +70,9 @@ func (s *organizationService) ListAllOrganizations() ([]dto.OrganizationResponse
 func (s *organizationService) UpdateOrganization(id string, req dto.OrganizationUpdateRequest) (*dto.ResponseID, error) {
 	organization, err := s.repo.FindById(id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("no_resource_to_update")
+		}
 		return nil, err
 	}
 
@@ -84,10 +89,18 @@ func (s *organizationService) UpdateOrganization(id string, req dto.Organization
 		return nil, err
 	}
 
-	return &dto.ResponseID{ID: organization.ID}, nil
+	return dto.NewResponseID(organization.ID), nil
 }
 
 func (s *organizationService) DeleteOrganization(id string) error {
+	_, err := s.repo.FindById(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("no_resource_to_delete")
+		}
+		return err
+	}
+
 	if err := s.repo.Delete(id); err != nil {
 		return err
 	}
