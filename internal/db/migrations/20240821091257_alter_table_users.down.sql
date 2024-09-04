@@ -1,6 +1,6 @@
 ALTER TABLE users
     DROP COLUMN phone,
-    DROP COLUMN image,
+    DROP COLUMN img,
     DROP COLUMN is_premium,
     DROP COLUMN level,
     DROP COLUMN dob,
