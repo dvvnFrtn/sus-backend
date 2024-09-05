@@ -14,6 +14,7 @@ type UserRepository interface {
 	UpdateUser(sqlc.UpdateUserByIDParams) (sql.Result, error)
 	AddUserCategory(sqlc.CreateUserCategoryParams) (sql.Result, error)
 	UserCategoryExists(sqlc.UserCategoryExistsParams) (int64, error)
+	GetOrganizer(string) (sqlc.Organizer, error)
 }
 
 type userRepository struct {
@@ -50,4 +51,8 @@ func (r *userRepository) AddUserCategory(input sqlc.CreateUserCategoryParams) (s
 
 func (r *userRepository) UserCategoryExists(input sqlc.UserCategoryExistsParams) (int64, error) {
 	return r.db.UserCategoryExists(context.Background(), input)
+}
+
+func (r *userRepository) GetOrganizer(id string) (sqlc.Organizer, error) {
+	return r.db.GetOrganizer(context.Background(), id)
 }

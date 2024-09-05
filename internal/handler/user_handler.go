@@ -92,7 +92,7 @@ func (h *UserHandler) GetGoogleDetails(c *gin.Context) {
 		h.serv.RegisterUserFromGoogle(container.Email)
 	}
 
-	data, err := h.serv.GenerateToken(container.Email)
+	data, err := h.serv.GenerateToken(container.Email, "")
 	if err != nil {
 		response.FailOrError(c, 500, "Failed generating token", err)
 		return

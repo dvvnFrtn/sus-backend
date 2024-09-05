@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math/big"
 	"net"
@@ -28,7 +29,7 @@ type UserService interface {
 	RegisterUserFromGoogle(string) (*dto.ResponseID, error)
 	CreateUser(dto.UserCreateReq) (*dto.ResponseID, error)
 	Login(dto.UserLoginReq) (string, error)
-	GenerateToken(string) (string, error)
+	GenerateToken(string, string) (string, error)
 	FindUserByID(string) (*dto.UserResponse, error)
 	UpdateUser(string, dto.UserUpdateReq) (*dto.UserUpdateReq, error)
 	AddUserCategory(string, []string) error
@@ -160,20 +161,46 @@ func (s *userService) Login(arg dto.UserLoginReq) (string, error) {
 		return "", err
 	}
 
-	token, err := s.GenerateToken(user.Email)
+	token, err := jwt.GenerateToken(user, "")
 	if err != nil {
 		return "", err
 	}
 	return token, nil
 }
 
-func (s *userService) GenerateToken(email string) (string, error) {
-	user, err := s.repo.FindByEmail(email)
+func (s *userService) LoginForOrganizer(arg dto.UserLoginReq) (string, error) {
+	user, err := s.repo.FindByEmail(arg.Email)
 	if err != nil {
 		return "", err
 	}
 
-	token, err := jwt.GenerateToken(user)
+	err = bcrypt.ValidateHash(arg.Password, user.Password.String)
+	if err != nil {
+		return "", err
+	}
+
+	organizer, err := s.repo.GetOrganizer(user.ID)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := jwt.GenerateToken(user, organizer.OrganizationID.String)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+func (s *userService) GenerateToken(email string, org_id string) (string, error) {
+	user, err := s.repo.FindByEmail(email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errors.New("resource not found")
+		}
+		return "", err
+	}
+
+	token, err := jwt.GenerateToken(user, org_id)
 	if err != nil {
 		return "", err
 	}
