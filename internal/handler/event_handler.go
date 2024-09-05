@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"net/http"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/service"
 	"sus-backend/pkg/response"
@@ -24,30 +25,30 @@ func (h *EventHandler) GetEvents(c *gin.Context) {
 	if req.IDs != nil {
 		data, err := h.serv.GetEventsByCategory(req.IDs)
 		if err != nil {
-			response.FailOrError(c, 500, "Failed getting events", err)
+			response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 			return
 		}
 		result = data
 	} else {
 		data, err := h.serv.GetEvents()
 		if err != nil {
-			response.FailOrError(c, 500, "Failed getting events", err)
+			response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 			return
 		}
 		result = data
 	}
 
-	response.Success(c, 200, "Success getting events", result)
+	response.Success(c, http.StatusOK, "Resources Successfully Retrieved", result)
 }
 
 func (h *EventHandler) GetEventByID(c *gin.Context) {
 	idReq := c.Param("id")
 	data, err := h.serv.GetEventByID(idReq)
 	if err != nil {
-		response.FailOrError(c, 500, "Failed getting event", err)
+		response.FailOrError(c, http.StatusNotFound, err.Error(), err)
 		return
 	}
-	response.Success(c, 200, "Success getting events", data)
+	response.Success(c, http.StatusOK, "Resource Successfully Retrieved", data)
 }
 
 func (h *EventHandler) AddEvent(c *gin.Context) {
@@ -56,16 +57,16 @@ func (h *EventHandler) AddEvent(c *gin.Context) {
 
 	var req dto.CreateEventReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailOrError(c, 400, "Bad request", err)
+		response.FailOrError(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
 	resp, err := h.serv.CreateEvent(claims.ID, req)
 	if err != nil {
-		response.FailOrError(c, 500, "Failed creating event", err)
+		response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
-	response.Success(c, 201, "Success creating event", resp)
+	response.Success(c, http.StatusCreated, "Resource Created Successfully", resp)
 }
 
 func (h *EventHandler) DeleteEvent(c *gin.Context) {
@@ -75,8 +76,8 @@ func (h *EventHandler) DeleteEvent(c *gin.Context) {
 	idReq := c.Param("id")
 	err := h.serv.DeleteEvent(idReq, claims.ID)
 	if err != nil {
-		response.FailOrError(c, 500, "Failed deleting event", err)
+		response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
-	response.Success(c, 200, "Success deleting event", nil)
+	response.Success(c, http.StatusOK, "Resource Deleted Successfully", nil)
 }
