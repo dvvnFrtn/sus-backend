@@ -14,6 +14,8 @@ type Activity struct {
 	OrganizationID string
 	Title          sql.NullString
 	Note           string
+	StartTime      sql.NullTime
+	EndTime        sql.NullTime
 	CreatedAt      sql.NullTime
 	UpdatedAt      sql.NullTime
 }

@@ -29,6 +29,7 @@ type UserService interface {
 	RegisterUserFromGoogle(string) (*dto.ResponseID, error)
 	CreateUser(dto.UserCreateReq) (*dto.ResponseID, error)
 	Login(dto.UserLoginReq) (string, error)
+	LoginForOrganizer(dto.UserLoginReq) (string, error)
 	GenerateToken(string, string) (string, error)
 	FindUserByID(string) (*dto.UserResponse, error)
 	UpdateUser(string, dto.UserUpdateReq) (*dto.UserUpdateReq, error)

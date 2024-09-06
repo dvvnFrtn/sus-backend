@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/service"
@@ -55,7 +54,6 @@ func (h *EventHandler) GetEventByID(c *gin.Context) {
 func (h *EventHandler) AddEvent(c *gin.Context) {
 	auth, _ := c.Get("user")
 	claims := auth.(*dto.UserClaims)
-	log.Println(claims)
 
 	var req dto.CreateEventReq
 	if err := c.ShouldBindJSON(&req); err != nil {

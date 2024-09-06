@@ -190,6 +190,21 @@ func (h *UserHandler) Login(c *gin.Context) {
 	response.Success(c, 200, "Login succeed", gin.H{"token": data})
 }
 
+func (h *UserHandler) LoginForOrganizer(c *gin.Context) {
+	var req dto.UserLoginReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailOrError(c, 400, "Bad request", err)
+		return
+	}
+
+	data, err := h.serv.LoginForOrganizer(req)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed login", err)
+		return
+	}
+	response.Success(c, 200, "Login succeed", gin.H{"token": data})
+}
+
 func (h *UserHandler) FindUserByID(c *gin.Context) {
 	idReq := c.Param("id")
 	user, err := h.serv.FindUserByID(idReq)
