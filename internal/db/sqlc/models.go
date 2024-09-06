@@ -9,6 +9,17 @@ import (
 	"time"
 )
 
+type Activity struct {
+	ID             string
+	OrganizationID string
+	Title          sql.NullString
+	Note           string
+	StartTime      sql.NullTime
+	EndTime        sql.NullTime
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
 type Category struct {
 	ID           string
 	CategoryName string
@@ -48,6 +59,15 @@ type Organization struct {
 	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
 	UserID      string
+}
+
+type Organizer struct {
+	ID             string
+	OrganizationID sql.NullString
+	BankName       sql.NullString
+	BankAccount    sql.NullString
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
 }
 
 type Post struct {
