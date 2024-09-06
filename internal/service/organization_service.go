@@ -6,17 +6,17 @@ import (
 	"sus-backend/internal/db/sqlc"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/repository"
-	"time"
+	_error "sus-backend/pkg/err"
 
 	"github.com/google/uuid"
 )
 
 type OrganizationService interface {
-	CreateOrganization(dto.OrganizationCreateRequest) (*dto.ResponseID, error)
+	CreateOrganization(string, dto.OrganizationCreateRequest) (*dto.ResponseID, error)
 	FindOrganizationById(string) (*dto.OrganizationResponse, error)
 	ListAllOrganizations() ([]dto.OrganizationResponse, error)
-	UpdateOrganization(string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
-	DeleteOrganization(string) error
+	UpdateOrganization(string, string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
+	DeleteOrganization(string, string) error
 }
 
 type organizationService struct {
@@ -27,32 +27,36 @@ func NewOrganizationService(repo repository.OrganizationRepository) Organization
 	return &organizationService{repo}
 }
 
-func (s *organizationService) CreateOrganization(req dto.OrganizationCreateRequest) (*dto.ResponseID, error) {
-	organization := sqlc.AddOrganizationParams{
+func (s *organizationService) CreateOrganization(authID string, req dto.OrganizationCreateRequest) (*dto.ResponseID, error) {
+	_, err := s.repo.FindByUserId(authID)
+	if err == nil {
+		return nil, _error.ErrConflict
+	}
+
+	params := sqlc.AddOrganizationParams{
 		ID:          uuid.New().String(),
+		UserID:      authID,
 		Name:        req.Name,
 		Description: req.Description,
 		HeaderImg:   sql.NullString{},
 		ProfileImg:  sql.NullString{},
-		CreatedAt:   sql.NullTime{Time: time.Now(), Valid: true},
-		UpdatedAt:   sql.NullTime{Time: time.Now(), Valid: true},
 	}
 
-	_, err := s.repo.Create(organization)
+	_, err = s.repo.Create(params)
 	if err != nil {
-		return nil, err
+		return nil, _error.ErrInternal
 	}
 
-	return dto.NewResponseID(organization.ID), nil
+	return dto.NewResponseID(params.ID), nil
 }
 
 func (s *organizationService) FindOrganizationById(id string) (*dto.OrganizationResponse, error) {
 	organization, err := s.repo.FindById(id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("resource_not_found")
+			return nil, _error.ErrNotFound
 		}
-		return nil, err
+		return nil, _error.ErrInternal
 	}
 
 	return dto.ToOrganizationResponse(&organization), nil
@@ -61,48 +65,49 @@ func (s *organizationService) FindOrganizationById(id string) (*dto.Organization
 func (s *organizationService) ListAllOrganizations() ([]dto.OrganizationResponse, error) {
 	organizations, err := s.repo.ListAll()
 	if err != nil {
-		return nil, err
+		return nil, _error.ErrInternal
 	}
 
 	return dto.ToOrganizationResponses(&organizations), nil
 }
 
-func (s *organizationService) UpdateOrganization(id string, req dto.OrganizationUpdateRequest) (*dto.ResponseID, error) {
-	organization, err := s.repo.FindById(id)
+func (s *organizationService) UpdateOrganization(authID string, organizationID string, req dto.OrganizationUpdateRequest) (*dto.ResponseID, error) {
+	organization, err := s.repo.FindById(organizationID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("no_resource_to_update")
-		}
-		return nil, err
+		return nil, _error.ErrNoUpdated
 	}
 
-	organizationParams := &sqlc.UpdateOrganizationParams{
+	if organization.UserID != authID {
+		return nil, _error.ErrForbidden
+	}
+
+	params := &sqlc.UpdateOrganizationParams{
 		Name:        req.Name,
 		Description: req.Description,
 		HeaderImg:   sql.NullString{Valid: false},
 		ProfileImg:  sql.NullString{Valid: false},
-		ID:          organization.ID,
+		ID:          organizationID,
 	}
 
-	_, err = s.repo.Update(*organizationParams)
-	if err != nil {
-		return nil, err
+	if _, err := s.repo.Update(*params); err != nil {
+		return nil, _error.ErrInternal
 	}
 
-	return dto.NewResponseID(organization.ID), nil
+	return dto.NewResponseID(params.ID), nil
 }
 
-func (s *organizationService) DeleteOrganization(id string) error {
-	_, err := s.repo.FindById(id)
+func (s *organizationService) DeleteOrganization(authID string, organizationID string) error {
+	organization, err := s.repo.FindById(organizationID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return errors.New("no_resource_to_delete")
-		}
-		return err
+		return _error.ErrNoDeleted
 	}
 
-	if err := s.repo.Delete(id); err != nil {
-		return err
+	if organization.UserID != authID {
+		return _error.ErrForbidden
+	}
+
+	if err := s.repo.Delete(organizationID); err != nil {
+		return _error.ErrInternal
 	}
 
 	return nil

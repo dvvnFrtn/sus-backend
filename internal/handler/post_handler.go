@@ -5,6 +5,7 @@ import (
 	"sus-backend/internal/dto"
 	"sus-backend/internal/service"
 	"sus-backend/pkg/response"
+	_response "sus-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,22 +19,23 @@ func NewPostHandler(serv service.PostService) *PostHandler {
 }
 
 func (h *PostHandler) CreatePost(c *gin.Context) {
-	organizationId := c.Query("org_id")
+	// TODO: implement using organizationID from claims
+	organizationID := c.Query("org_id")
 
-	var organizationPostReq dto.PostCreateRequest
-	err := c.ShouldBindJSON(&organizationPostReq)
+	request := new(dto.PostCreateRequest)
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
-		response.FailOrError(c, http.StatusBadRequest, "invalid_request", err)
+		_response.FailOrError(c, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 
-	res, err := h.serv.CreatePost(organizationId, organizationPostReq)
+	response, err := h.serv.CreatePost(organizationID, *request)
 	if err != nil {
-		response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
 
-	response.Success(c, http.StatusCreated, "Resource Created Successfully", res)
+	_response.Success(c, http.StatusCreated, "Resource Created Successfully", response)
 }
 
 func (h *PostHandler) FindPostById(c *gin.Context) {
@@ -69,12 +71,13 @@ func (h *PostHandler) ListAllPosts(c *gin.Context) {
 }
 
 func (h *PostHandler) DeletePost(c *gin.Context) {
-	idReq := c.Param("id")
-	err := h.serv.DeletePost(idReq)
-	if err != nil {
-		response.FailOrError(c, http.StatusNotFound, err.Error(), err)
+	postID := c.Param("id")
+	organizationID := c.Query("org_id")
+
+	if err := h.serv.DeletePost(organizationID, postID); err != nil {
+		_response.FailOrError(c, http.StatusNotFound, err.Error(), err)
 		return
 	}
 
-	response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
+	_response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
 }

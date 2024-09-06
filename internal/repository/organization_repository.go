@@ -12,6 +12,7 @@ type OrganizationRepository interface {
 	ListAll() ([]sqlc.Organization, error)
 	Update(sqlc.UpdateOrganizationParams) (sql.Result, error)
 	Delete(string) error
+	FindByUserId(id string) (sqlc.Organization, error)
 }
 
 type organizationRepository struct {
@@ -41,4 +42,8 @@ func (r *organizationRepository) Update(in sqlc.UpdateOrganizationParams) (sql.R
 
 func (r *organizationRepository) Delete(id string) error {
 	return r.db.DeleteOrganization(context.Background(), id)
+}
+
+func (r *organizationRepository) FindByUserId(id string) (sqlc.Organization, error) {
+	return r.db.FindOrganizationByUserId(context.Background(), id)
 }
