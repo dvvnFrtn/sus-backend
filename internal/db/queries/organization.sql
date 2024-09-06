@@ -1,10 +1,13 @@
 -- name: AddOrganization :execresult
 INSERT INTO organizations (
-    id, name, description, header_img, profile_img, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?);
+    id, user_id, name, description, header_img, profile_img, created_at, updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: FindOrganizationById :one
 SELECT * FROM organizations WHERE id = ?;
+
+-- name: FindOrganizationByUserId :one
+SELECT * FROM organizations WHERE user_id = ?;
 
 -- name: ListOrganization :many
 SELECT * FROM organizations;
