@@ -6,12 +6,48 @@ package sqlc
 
 import (
 	"database/sql"
+	"time"
 )
+
+type Activity struct {
+	ID             string
+	OrganizationID string
+	Title          sql.NullString
+	Note           string
+	StartTime      sql.NullTime
+	EndTime        sql.NullTime
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
 
 type Category struct {
 	ID           string
 	CategoryName string
 	CreatedAt    sql.NullTime
+}
+
+type Event struct {
+	ID             string
+	OrganizationID string
+	Title          string
+	Img            sql.NullString
+	Description    sql.NullString
+	Registrant     sql.NullInt32
+	MaxRegistrant  sql.NullInt32
+	Date           time.Time
+	StartTime      sql.NullTime
+	EndTime        sql.NullTime
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
+type EventPricing struct {
+	ID        int64
+	EventID   string
+	EventType sql.NullString
+	Price     sql.NullInt32
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
 }
 
 type Organization struct {
@@ -20,6 +56,35 @@ type Organization struct {
 	Description string
 	HeaderImg   sql.NullString
 	ProfileImg  sql.NullString
+	CreatedAt   sql.NullTime
+	UpdatedAt   sql.NullTime
+}
+
+type Organizer struct {
+	ID             string
+	OrganizationID sql.NullString
+	BankName       sql.NullString
+	BankAccount    sql.NullString
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
+type Post struct {
+	ID             string
+	OrganizationID string
+	Content        string
+	ImageContent   sql.NullString
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
+type Speaker struct {
+	ID          string
+	Name        string
+	Title       sql.NullString
+	Img         sql.NullString
+	Description sql.NullString
+	EventID     sql.NullString
 	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
 }

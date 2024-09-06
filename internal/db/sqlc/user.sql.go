@@ -57,6 +57,31 @@ func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (sql.Result, e
 	)
 }
 
+const createOrganizer = `-- name: CreateOrganizer :execresult
+INSERT INTO organizers (id, organization_id, bank_name, bank_account, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
+`
+
+type CreateOrganizerParams struct {
+	ID             string
+	OrganizationID sql.NullString
+	BankName       sql.NullString
+	BankAccount    sql.NullString
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
+}
+
+func (q *Queries) CreateOrganizer(ctx context.Context, arg CreateOrganizerParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createOrganizer,
+		arg.ID,
+		arg.OrganizationID,
+		arg.BankName,
+		arg.BankAccount,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+}
+
 const emailExists = `-- name: EmailExists :one
 SELECT COUNT(1) FROM users WHERE email = ?
 `
@@ -120,6 +145,24 @@ func (q *Queries) FindUserByID(ctx context.Context, id string) (User, error) {
 		&i.UpdatedAt,
 		&i.Username,
 		&i.Address,
+	)
+	return i, err
+}
+
+const getOrganizer = `-- name: GetOrganizer :one
+SELECT id, organization_id, bank_name, bank_account, created_at, updated_at FROM organizers WHERE id = ?
+`
+
+func (q *Queries) GetOrganizer(ctx context.Context, id string) (Organizer, error) {
+	row := q.db.QueryRowContext(ctx, getOrganizer, id)
+	var i Organizer
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.BankName,
+		&i.BankAccount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
