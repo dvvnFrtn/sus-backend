@@ -119,11 +119,11 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 const getEventsByCategory = `-- name: GetEventsByCategory :many
 SELECT events.id, events.organization_id, events.title, events.img, events.description, events.registrant, events.max_registrant, events.date, events.start_time, events.end_time, events.created_at, events.updated_at FROM events
 INNER JOIN user_categories ON user_id = organization_id
-WHERE category_id = ?
+WHERE FIND_IN_SET(category_id, ?)
 `
 
-func (q *Queries) GetEventsByCategory(ctx context.Context, categoryID string) ([]Event, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsByCategory, categoryID)
+func (q *Queries) GetEventsByCategory(ctx context.Context, findINSET string) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsByCategory, findINSET)
 	if err != nil {
 		return nil, err
 	}

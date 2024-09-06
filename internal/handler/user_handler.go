@@ -92,7 +92,7 @@ func (h *UserHandler) GetGoogleDetails(c *gin.Context) {
 		h.serv.RegisterUserFromGoogle(container.Email)
 	}
 
-	data, err := h.serv.GenerateToken(container.Email)
+	data, err := h.serv.GenerateToken(container.Email, "")
 	if err != nil {
 		response.FailOrError(c, 500, "Failed generating token", err)
 		return
@@ -183,6 +183,21 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 
 	data, err := h.serv.Login(req)
+	if err != nil {
+		response.FailOrError(c, 500, "Failed login", err)
+		return
+	}
+	response.Success(c, 200, "Login succeed", gin.H{"token": data})
+}
+
+func (h *UserHandler) LoginForOrganizer(c *gin.Context) {
+	var req dto.UserLoginReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailOrError(c, 400, "Bad request", err)
+		return
+	}
+
+	data, err := h.serv.LoginForOrganizer(req)
 	if err != nil {
 		response.FailOrError(c, 500, "Failed login", err)
 		return

@@ -11,14 +11,14 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func GenerateToken(payload sqlc.User) (string, error) {
+func GenerateToken(payload sqlc.User, org_id string) (string, error) {
 	expStr := os.Getenv("JWT_EXP")
 	var exp time.Duration
 	exp, err := time.ParseDuration(expStr)
 	if expStr == "" || err != nil {
 		exp = time.Hour * 3
 	}
-	tokenJwtSementara := jwt.NewWithClaims(jwt.SigningMethodHS256, dto.NewUserClaims(payload.ID, payload.Role, exp))
+	tokenJwtSementara := jwt.NewWithClaims(jwt.SigningMethodHS256, dto.NewUserClaims(payload.ID, payload.Role, org_id, exp))
 	tokenJwt, err := tokenJwtSementara.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
 		return "", err
