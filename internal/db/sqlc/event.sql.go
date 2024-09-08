@@ -42,6 +42,44 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (sql.R
 	)
 }
 
+const createEventPricing = `-- name: CreateEventPricing :execresult
+INSERT INTO event_pricings (event_id, event_type, price)
+VALUES (?, ?, ?)
+`
+
+type CreateEventPricingParams struct {
+	EventID   string
+	EventType sql.NullString
+	Price     sql.NullInt32
+}
+
+func (q *Queries) CreateEventPricing(ctx context.Context, arg CreateEventPricingParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createEventPricing, arg.EventID, arg.EventType, arg.Price)
+}
+
+const createSpeaker = `-- name: CreateSpeaker :execresult
+INSERT INTO speakers (id, event_id, name, title, description)
+VALUES (?, ?, ?, ?, ?)
+`
+
+type CreateSpeakerParams struct {
+	ID          string
+	EventID     sql.NullString
+	Name        string
+	Title       sql.NullString
+	Description sql.NullString
+}
+
+func (q *Queries) CreateSpeaker(ctx context.Context, arg CreateSpeakerParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createSpeaker,
+		arg.ID,
+		arg.EventID,
+		arg.Name,
+		arg.Title,
+		arg.Description,
+	)
+}
+
 const deleteEvent = `-- name: DeleteEvent :exec
 DELETE FROM events
 WHERE id = ?
@@ -74,6 +112,40 @@ func (q *Queries) GetEventByID(ctx context.Context, id string) (Event, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getEventPricings = `-- name: GetEventPricings :many
+SELECT id, event_id, event_type, price, created_at, updated_at FROM event_pricings WHERE event_id = ?
+`
+
+func (q *Queries) GetEventPricings(ctx context.Context, eventID string) ([]EventPricing, error) {
+	rows, err := q.db.QueryContext(ctx, getEventPricings, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []EventPricing
+	for rows.Next() {
+		var i EventPricing
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventID,
+			&i.EventType,
+			&i.Price,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getEvents = `-- name: GetEvents :many
@@ -119,11 +191,11 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 const getEventsByCategory = `-- name: GetEventsByCategory :many
 SELECT events.id, events.organization_id, events.title, events.img, events.description, events.registrant, events.max_registrant, events.date, events.start_time, events.end_time, events.created_at, events.updated_at FROM events
 INNER JOIN user_categories ON user_id = organization_id
-WHERE category_id = ?
+WHERE FIND_IN_SET(category_id, ?)
 `
 
-func (q *Queries) GetEventsByCategory(ctx context.Context, categoryID string) ([]Event, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsByCategory, categoryID)
+func (q *Queries) GetEventsByCategory(ctx context.Context, findINSET string) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsByCategory, findINSET)
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +214,42 @@ func (q *Queries) GetEventsByCategory(ctx context.Context, categoryID string) ([
 			&i.Date,
 			&i.StartTime,
 			&i.EndTime,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSpeakersByEventID = `-- name: GetSpeakersByEventID :many
+SELECT id, name, title, img, description, event_id, created_at, updated_at FROM speakers WHERE event_id = ?
+`
+
+func (q *Queries) GetSpeakersByEventID(ctx context.Context, eventID sql.NullString) ([]Speaker, error) {
+	rows, err := q.db.QueryContext(ctx, getSpeakersByEventID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Speaker
+	for rows.Next() {
+		var i Speaker
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Title,
+			&i.Img,
+			&i.Description,
+			&i.EventID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
