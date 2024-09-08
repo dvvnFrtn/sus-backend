@@ -41,15 +41,17 @@ type UserUpdateReq struct {
 }
 
 type UserClaims struct {
-	ID   string `json:"id" binding:"required"`
-	Role string `json:"role" binding:"required"`
+	ID             string `json:"id" binding:"required"`
+	Role           string `json:"role" binding:"required"`
+	OrganizationID string `json:"organization_id"`
 	jwt.RegisteredClaims
 }
 
-func NewUserClaims(id string, role string, exp time.Duration) UserClaims {
+func NewUserClaims(id string, role string, org_id string, exp time.Duration) UserClaims {
 	return UserClaims{
-		ID:   id,
-		Role: role,
+		ID:             id,
+		Role:           role,
+		OrganizationID: org_id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(exp)),
 		},

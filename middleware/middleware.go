@@ -35,8 +35,9 @@ func ValidateToken(roles ...string) gin.HandlerFunc {
 		for _, role := range roles {
 			if claims.Role == role {
 				user := &dto.UserClaims{
-					ID:   claims.ID,
-					Role: claims.Role,
+					ID:             claims.ID,
+					Role:           claims.Role,
+					OrganizationID: claims.OrganizationID,
 				}
 
 				ctx.Set("user", user)
