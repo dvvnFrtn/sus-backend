@@ -20,6 +20,7 @@ type PostService interface {
 	DeletePost(string, string) error
 	LikedPost(string, string) error
 	UnlikedPost(string, string) error
+	GetPostLikes(string) ([]dto.PostLikesResponse, error)
 }
 
 type postService struct {
@@ -51,8 +52,8 @@ func (s *postService) CreatePost(organizationID string, req dto.PostCreateReques
 	return dto.NewResponseID(params.ID), nil
 }
 
-func (s *postService) GetPostById(organizationID string) (*dto.PostResponse, error) {
-	post, err := s.repo.FindById(organizationID)
+func (s *postService) GetPostById(postID string) (*dto.PostResponse, error) {
+	post, err := s.repo.FindById(postID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, _error.ErrNotFound
@@ -164,4 +165,18 @@ func (s *postService) UnlikedPost(authID string, postID string) error {
 	}
 
 	return nil
+}
+
+func (s *postService) GetPostLikes(postID string) ([]dto.PostLikesResponse, error) {
+	if _, err := s.repo.FindById(postID); err != nil {
+		return nil, _error.ErrNotFound
+	}
+
+	postLikes, err := s.repo.FindPostLikes(postID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	return dto.ToPostLikesResponse(&postLikes), nil
 }

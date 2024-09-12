@@ -19,6 +19,18 @@ type PostResponse struct {
 	Organization *WithOrganization `json:"organization,omitempty"`
 }
 
+type PostLikesResponse struct {
+	PostID  string    `json:"post_id"`
+	LikedAt time.Time `json:"liked_at"`
+	User    *WithUser `json:"user,omitempty"`
+}
+
+type WithUser struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Image string `json:"image,omitempty"`
+}
+
 type WithOrganization struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
@@ -60,4 +72,23 @@ func ToPostResponses(posts *[]sqlc.FindPostByIdRow) []PostResponse {
 	}
 
 	return postResponses
+}
+
+func ToPostLikesResponse(postLikes *[]sqlc.FindPostLikesRow) []PostLikesResponse {
+	postLikesResponses := []PostLikesResponse{}
+	for _, pl := range *postLikes {
+		postLikeResponse := PostLikesResponse{
+			PostID:  pl.PostID,
+			LikedAt: pl.LikedAt.Time,
+			User: &WithUser{
+				ID:    pl.UserID,
+				Name:  pl.Name,
+				Image: pl.Img.String,
+			},
+		}
+
+		postLikesResponses = append(postLikesResponses, postLikeResponse)
+	}
+
+	return postLikesResponses
 }

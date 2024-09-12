@@ -111,3 +111,15 @@ func (h *PostHandler) UnlikedPost(c *gin.Context) {
 
 	_response.Success(c, http.StatusOK, "Post Unliked Successfully", nil)
 }
+
+func (h *PostHandler) GetPostLikes(c *gin.Context) {
+	postID := c.Param("id")
+
+	response, err := h.serv.GetPostLikes(postID)
+	if err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Resource Retrievied Successfully", response)
+}

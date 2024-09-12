@@ -32,6 +32,19 @@ func (q *Queries) AddPost(ctx context.Context, arg AddPostParams) (sql.Result, e
 	)
 }
 
+const countPostLikes = `-- name: CountPostLikes :one
+SELECT COUNT(pl.id) FROM post_likes pl
+INNER JOIN posts p ON pl.post_id = p.id
+WHERE p.id = ?
+`
+
+func (q *Queries) CountPostLikes(ctx context.Context, id string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPostLikes, id)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deletePost = `-- name: DeletePost :exec
 DELETE FROM posts WHERE id = ?
 `
@@ -111,6 +124,50 @@ func (q *Queries) FindPostByOrganization(ctx context.Context, organizationID str
 			&i.OrganizationID,
 			&i.Name,
 			&i.ProfileImg,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findPostLikes = `-- name: FindPostLikes :many
+SELECT u.name, u.img, pl.liked_at, pl.post_id, pl.user_id
+FROM post_likes pl
+INNER JOIN users u ON pl.user_id = u.id
+WHERE post_id = ?
+`
+
+type FindPostLikesRow struct {
+	Name    string
+	Img     sql.NullString
+	LikedAt sql.NullTime
+	PostID  string
+	UserID  string
+}
+
+func (q *Queries) FindPostLikes(ctx context.Context, postID string) ([]FindPostLikesRow, error) {
+	rows, err := q.db.QueryContext(ctx, findPostLikes, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindPostLikesRow
+	for rows.Next() {
+		var i FindPostLikesRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Img,
+			&i.LikedAt,
+			&i.PostID,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

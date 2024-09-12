@@ -33,3 +33,9 @@ SELECT COUNT(1) FROM post_likes WHERE user_id = ? AND post_id = ?;
 
 -- name: UnlikedPost :exec
 DELETE FROM post_likes WHERE user_id = ? AND post_id = ?;
+
+-- name: FindPostLikes :many
+SELECT u.name, u.img, pl.liked_at, pl.post_id, pl.user_id
+FROM post_likes pl
+INNER JOIN users u ON pl.user_id = u.id
+WHERE post_id = ?;
