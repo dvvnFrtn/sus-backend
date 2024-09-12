@@ -12,7 +12,7 @@ type OrganizationRepository interface {
 	ListAll() ([]sqlc.Organization, error)
 	Update(sqlc.UpdateOrganizationParams) (sql.Result, error)
 	Delete(string) error
-	FindByUserId(id string) (sqlc.Organization, error)
+	IsExist(string) (int64, error)
 }
 
 type organizationRepository struct {
@@ -44,6 +44,6 @@ func (r *organizationRepository) Delete(id string) error {
 	return r.db.DeleteOrganization(context.Background(), id)
 }
 
-func (r *organizationRepository) FindByUserId(id string) (sqlc.Organization, error) {
-	return r.db.FindOrganizationByUserId(context.Background(), id)
+func (r *organizationRepository) IsExist(id string) (int64, error) {
+	return r.db.IsOrganizationExist(context.Background(), id)
 }

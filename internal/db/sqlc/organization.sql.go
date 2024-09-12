@@ -12,8 +12,8 @@ import (
 
 const addOrganization = `-- name: AddOrganization :execresult
 INSERT INTO organizations (
-    id, user_id, name, description, header_img, profile_img, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    id, user_id, name, description, header_img, profile_img
+) VALUES (?, ?, ?, ?, ?, ?)
 `
 
 type AddOrganizationParams struct {
@@ -23,8 +23,6 @@ type AddOrganizationParams struct {
 	Description string
 	HeaderImg   sql.NullString
 	ProfileImg  sql.NullString
-	CreatedAt   sql.NullTime
-	UpdatedAt   sql.NullTime
 }
 
 func (q *Queries) AddOrganization(ctx context.Context, arg AddOrganizationParams) (sql.Result, error) {
@@ -35,8 +33,6 @@ func (q *Queries) AddOrganization(ctx context.Context, arg AddOrganizationParams
 		arg.Description,
 		arg.HeaderImg,
 		arg.ProfileImg,
-		arg.CreatedAt,
-		arg.UpdatedAt,
 	)
 }
 
@@ -88,6 +84,17 @@ func (q *Queries) FindOrganizationByUserId(ctx context.Context, userID string) (
 		&i.UserID,
 	)
 	return i, err
+}
+
+const isOrganizationExist = `-- name: IsOrganizationExist :one
+SELECT COUNT(1) FROM organizations INNER JOIN users ON organizations.user_id = users.id WHERE user_id = ?
+`
+
+func (q *Queries) IsOrganizationExist(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, isOrganizationExist, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const listOrganization = `-- name: ListOrganization :many

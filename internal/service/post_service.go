@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"sus-backend/internal/db/sqlc"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/repository"
@@ -13,23 +14,22 @@ import (
 
 type PostService interface {
 	CreatePost(string, dto.PostCreateRequest) (*dto.ResponseID, error)
-	FindPostById(string) (*dto.PostResponse, error)
-	ListAllPosts() ([]dto.PostResponse, error)
+	GetPostById(string) (*dto.PostResponse, error)
+	GetPostsByOrganization(string) ([]dto.PostResponse, error)
+	GetAllPosts() ([]dto.PostResponse, error)
 	DeletePost(string, string) error
 }
 
 type postService struct {
-	repo    repository.PostRepository
-	orgServ OrganizationService
-	orgRepo repository.OrganizationRepository
+	repo repository.PostRepository
 }
 
-func NewPostService(repo repository.PostRepository, orgServ OrganizationService, orgRepo repository.OrganizationRepository) PostService {
-	return &postService{repo, orgServ, orgRepo}
+func NewPostService(repo repository.PostRepository) PostService {
+	return &postService{repo}
 }
 
-// auth: organizer
 func (s *postService) CreatePost(organizationID string, req dto.PostCreateRequest) (*dto.ResponseID, error) {
+	// Error: there is no organization associated
 	if organizationID == "" {
 		return nil, _error.ErrNoOrganization
 	}
@@ -42,48 +42,64 @@ func (s *postService) CreatePost(organizationID string, req dto.PostCreateReques
 	}
 
 	if _, err := s.repo.Create(params); err != nil {
+		fmt.Println(err)
 		return nil, _error.ErrInternal
 	}
 
 	return dto.NewResponseID(params.ID), nil
 }
 
-// auth: organizer, user
-func (s *postService) FindPostById(organizationID string) (*dto.PostResponse, error) {
+func (s *postService) GetPostById(organizationID string) (*dto.PostResponse, error) {
 	post, err := s.repo.FindById(organizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, _error.ErrNotFound
 		}
+		fmt.Println(err)
 		return nil, _error.ErrInternal
 	}
 
 	return dto.ToPostResponse(&post), nil
 }
 
-// TODO: implement using timeline, followed by user
-// auth:
-func (s *postService) ListAllPosts() ([]dto.PostResponse, error) {
-	posts, err := s.repo.ListAll()
+func (s *postService) GetPostsByOrganization(organizationID string) ([]dto.PostResponse, error) {
+	posts, err := s.repo.FindByOrganization(organizationID)
 	if err != nil {
+		fmt.Println(err)
 		return nil, _error.ErrInternal
 	}
 
 	return dto.ToPostResponses(&posts), nil
 }
 
-// auth: organizer
+// TODO: implement using timeline, followed by user
+func (s *postService) GetAllPosts() ([]dto.PostResponse, error) {
+	posts, err := s.repo.ListAll()
+	if err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	return dto.ToPostResponses(&posts), nil
+}
+
 func (s *postService) DeletePost(organizationID string, postID string) error {
 	post, err := s.repo.FindById(postID)
 	if err != nil {
-		return _error.ErrNoDeleted
+		if errors.Is(err, sql.ErrNoRows) {
+			return _error.ErrNoDeleted
+		}
+		fmt.Println(err)
+		return _error.ErrInternal
 	}
 
+	// Error: resource not belongs to organizer
 	if post.OrganizationID != organizationID {
 		return _error.ErrForbidden
 	}
 
 	if err := s.repo.Delete(postID); err != nil {
+		fmt.Println(err)
 		return _error.ErrInternal
 	}
 

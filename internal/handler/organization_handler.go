@@ -36,10 +36,10 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 	_response.Success(c, http.StatusCreated, "Resource Created Successfully", response)
 }
 
-func (h *OrganizationHandler) FindOrganizationById(c *gin.Context) {
+func (h *OrganizationHandler) GetOrganizationById(c *gin.Context) {
 	organizationID := c.Param("id")
 
-	response, err := h.serv.FindOrganizationById(organizationID)
+	response, err := h.serv.GetOrganizationById(organizationID)
 	if err != nil {
 		_response.FailOrError(c, http.StatusNotFound, err.Error(), err)
 		return
@@ -48,8 +48,8 @@ func (h *OrganizationHandler) FindOrganizationById(c *gin.Context) {
 	_response.Success(c, http.StatusFound, "Resource Successfully Retrieved", response)
 }
 
-func (h *OrganizationHandler) ListAllOrganizations(c *gin.Context) {
-	response, err := h.serv.ListAllOrganizations()
+func (h *OrganizationHandler) GetAllOrganizations(c *gin.Context) {
+	response, err := h.serv.GetAllOrganizations()
 	if err != nil {
 		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 		return

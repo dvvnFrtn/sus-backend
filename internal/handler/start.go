@@ -21,16 +21,16 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 	r.POST("/user-categories", middleware.ValidateToken("user"), uh.AddUserCategory)
 	r.POST("/login-organizers", uh.LoginForOrganizer)
 
+	r.GET("/organizations/:id", oh.GetOrganizationById)
+	r.GET("/organizations", oh.GetAllOrganizations)
+	r.GET("/organizations/:id/posts", ph.GetPostsByOrganization)
 	r.POST("/organizations", middleware.ValidateToken("organization"), oh.CreateOrganization)
-	r.GET("/organizations/:id/posts", ph.FindPostsByOrganization)
-	r.GET("/organizations/:id", oh.FindOrganizationById)
-	r.GET("/organizations", oh.ListAllOrganizations)
 	r.PUT("/organizations/:id", middleware.ValidateToken("organization"), oh.UpdateOrganizations)
 	r.DELETE("/organizations/:id", middleware.ValidateToken("organization"), oh.DeleteOrganization)
 
+	r.GET("/posts", ph.GetAllPosts)
+	r.GET("/posts/:id", ph.GetPostById)
 	r.POST("/posts", middleware.ValidateToken("organization"), ph.CreatePost)
-	r.GET("/posts", ph.ListAllPosts)
-	r.GET("/posts/:id", ph.FindPostById)
 	r.DELETE("/posts/:id", middleware.ValidateToken("organization"), ph.DeletePost)
 
 	r.GET("/events", eh.GetEvents)
@@ -56,7 +56,7 @@ func InitHandler(db *sql.DB) (*UserHandler, *OrganizationHandler, *PostHandler, 
 	organizationHand := NewOrganizationHandler(organizationServ)
 
 	postRepo := repository.NewPostRepository(queries)
-	postServ := service.NewPostService(postRepo, organizationServ, organizationRepo)
+	postServ := service.NewPostService(postRepo)
 	postHand := NewPostHandler(postServ)
 
 	eventRepo := repository.NewEventRepository(queries)

@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"sus-backend/internal/db/sqlc"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/repository"
@@ -13,8 +14,8 @@ import (
 
 type OrganizationService interface {
 	CreateOrganization(string, dto.OrganizationCreateRequest) (*dto.ResponseID, error)
-	FindOrganizationById(string) (*dto.OrganizationResponse, error)
-	ListAllOrganizations() ([]dto.OrganizationResponse, error)
+	GetOrganizationById(string) (*dto.OrganizationResponse, error)
+	GetAllOrganizations() ([]dto.OrganizationResponse, error)
 	UpdateOrganization(string, string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
 	DeleteOrganization(string, string) error
 }
@@ -28,8 +29,14 @@ func NewOrganizationService(repo repository.OrganizationRepository) Organization
 }
 
 func (s *organizationService) CreateOrganization(authID string, req dto.OrganizationCreateRequest) (*dto.ResponseID, error) {
-	_, err := s.repo.FindByUserId(authID)
-	if err == nil {
+	count, err := s.repo.IsExist(authID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	// Error: one organizer only can create one organization
+	if count >= 1 {
 		return nil, _error.ErrConflict
 	}
 
@@ -38,33 +45,36 @@ func (s *organizationService) CreateOrganization(authID string, req dto.Organiza
 		UserID:      authID,
 		Name:        req.Name,
 		Description: req.Description,
-		HeaderImg:   sql.NullString{},
-		ProfileImg:  sql.NullString{},
+		// Not Implemented
+		HeaderImg:  sql.NullString{},
+		ProfileImg: sql.NullString{},
 	}
 
-	_, err = s.repo.Create(params)
-	if err != nil {
+	if _, err := s.repo.Create(params); err != nil {
+		fmt.Println(err)
 		return nil, _error.ErrInternal
 	}
 
 	return dto.NewResponseID(params.ID), nil
 }
 
-func (s *organizationService) FindOrganizationById(id string) (*dto.OrganizationResponse, error) {
+func (s *organizationService) GetOrganizationById(id string) (*dto.OrganizationResponse, error) {
 	organization, err := s.repo.FindById(id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, _error.ErrNotFound
 		}
+		fmt.Println(err)
 		return nil, _error.ErrInternal
 	}
 
 	return dto.ToOrganizationResponse(&organization), nil
 }
 
-func (s *organizationService) ListAllOrganizations() ([]dto.OrganizationResponse, error) {
+func (s *organizationService) GetAllOrganizations() ([]dto.OrganizationResponse, error) {
 	organizations, err := s.repo.ListAll()
 	if err != nil {
+		fmt.Println(err)
 		return nil, _error.ErrInternal
 	}
 
@@ -74,22 +84,29 @@ func (s *organizationService) ListAllOrganizations() ([]dto.OrganizationResponse
 func (s *organizationService) UpdateOrganization(authID string, organizationID string, req dto.OrganizationUpdateRequest) (*dto.ResponseID, error) {
 	organization, err := s.repo.FindById(organizationID)
 	if err != nil {
-		return nil, _error.ErrNoUpdated
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, _error.ErrNoUpdated
+		}
+		fmt.Println(err)
+		return nil, _error.ErrInternal
 	}
 
+	// Error: resource not belongs to authenticated user
 	if organization.UserID != authID {
 		return nil, _error.ErrForbidden
 	}
 
-	params := &sqlc.UpdateOrganizationParams{
+	params := sqlc.UpdateOrganizationParams{
 		Name:        req.Name,
 		Description: req.Description,
-		HeaderImg:   sql.NullString{Valid: false},
-		ProfileImg:  sql.NullString{Valid: false},
-		ID:          organizationID,
+		// Not Implemented
+		HeaderImg:  sql.NullString{},
+		ProfileImg: sql.NullString{},
+		ID:         organizationID,
 	}
 
-	if _, err := s.repo.Update(*params); err != nil {
+	if _, err := s.repo.Update(params); err != nil {
+		fmt.Println(err)
 		return nil, _error.ErrInternal
 	}
 
@@ -99,14 +116,20 @@ func (s *organizationService) UpdateOrganization(authID string, organizationID s
 func (s *organizationService) DeleteOrganization(authID string, organizationID string) error {
 	organization, err := s.repo.FindById(organizationID)
 	if err != nil {
-		return _error.ErrNoDeleted
+		if errors.Is(err, sql.ErrNoRows) {
+			return _error.ErrNoDeleted
+		}
+		fmt.Println(err)
+		return _error.ErrInternal
 	}
 
+	// Error: resource not belongs to authenticated user
 	if organization.UserID != authID {
 		return _error.ErrForbidden
 	}
 
 	if err := s.repo.Delete(organizationID); err != nil {
+		fmt.Println(err)
 		return _error.ErrInternal
 	}
 
