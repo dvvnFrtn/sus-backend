@@ -79,6 +79,13 @@ type Post struct {
 	UpdatedAt      sql.NullTime
 }
 
+type PostLike struct {
+	ID      int32
+	UserID  string
+	PostID  string
+	LikedAt sql.NullTime
+}
+
 type Speaker struct {
 	ID          string
 	Name        string

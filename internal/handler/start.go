@@ -30,8 +30,10 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 
 	r.GET("/posts", ph.GetAllPosts)
 	r.GET("/posts/:id", ph.GetPostById)
+	r.POST("/posts/:id/likes", middleware.ValidateToken("user"), ph.LikedPost)
 	r.POST("/posts", middleware.ValidateToken("organization"), ph.CreatePost)
 	r.DELETE("/posts/:id", middleware.ValidateToken("organization"), ph.DeletePost)
+	r.DELETE("/posts/:id/likes", middleware.ValidateToken("user"), ph.UnlikedPost)
 
 	r.GET("/events", eh.GetEvents)
 	r.GET("/events/:id", eh.GetEventByID)

@@ -125,6 +125,37 @@ func (q *Queries) FindPostByOrganization(ctx context.Context, organizationID str
 	return items, nil
 }
 
+const isLiked = `-- name: IsLiked :one
+SELECT COUNT(1) FROM post_likes WHERE user_id = ? AND post_id = ?
+`
+
+type IsLikedParams struct {
+	UserID string
+	PostID string
+}
+
+func (q *Queries) IsLiked(ctx context.Context, arg IsLikedParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, isLiked, arg.UserID, arg.PostID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const likedPost = `-- name: LikedPost :execresult
+INSERT INTO post_likes (
+    user_id, post_id
+) VALUES (?, ?)
+`
+
+type LikedPostParams struct {
+	UserID string
+	PostID string
+}
+
+func (q *Queries) LikedPost(ctx context.Context, arg LikedPostParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, likedPost, arg.UserID, arg.PostID)
+}
+
 const listPosts = `-- name: ListPosts :many
 SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img
 FROM posts p
@@ -172,4 +203,18 @@ func (q *Queries) ListPosts(ctx context.Context) ([]ListPostsRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const unlikedPost = `-- name: UnlikedPost :exec
+DELETE FROM post_likes WHERE user_id = ? AND post_id = ?
+`
+
+type UnlikedPostParams struct {
+	UserID string
+	PostID string
+}
+
+func (q *Queries) UnlikedPost(ctx context.Context, arg UnlikedPostParams) error {
+	_, err := q.db.ExecContext(ctx, unlikedPost, arg.UserID, arg.PostID)
+	return err
 }

@@ -18,6 +18,8 @@ type PostService interface {
 	GetPostsByOrganization(string) ([]dto.PostResponse, error)
 	GetAllPosts() ([]dto.PostResponse, error)
 	DeletePost(string, string) error
+	LikedPost(string, string) error
+	UnlikedPost(string, string) error
 }
 
 type postService struct {
@@ -99,6 +101,64 @@ func (s *postService) DeletePost(organizationID string, postID string) error {
 	}
 
 	if err := s.repo.Delete(postID); err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	return nil
+}
+
+func (s *postService) LikedPost(authID string, postID string) error {
+	if _, err := s.repo.FindById(postID); err != nil {
+		return _error.ErrNotFound
+	}
+
+	params := sqlc.LikedPostParams{
+		UserID: authID,
+		PostID: postID,
+	}
+
+	count, err := s.repo.IsLiked(sqlc.IsLikedParams(params))
+	if err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	// Error: user already liked the post
+	if count >= 1 {
+		return _error.ErrAlreadyLiked
+	}
+
+	if _, err := s.repo.LikedPost(params); err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *postService) UnlikedPost(authID string, postID string) error {
+	if _, err := s.repo.FindById(postID); err != nil {
+		return _error.ErrNotFound
+	}
+
+	params := sqlc.UnlikedPostParams{
+		UserID: authID,
+		PostID: postID,
+	}
+
+	count, err := s.repo.IsLiked(sqlc.IsLikedParams(params))
+	if err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	// Error: user not liked the post yet
+	if count <= 0 {
+		return _error.ErrNotLiked
+	}
+
+	if err := s.repo.UnlikedPost(params); err != nil {
 		fmt.Println(err)
 		return _error.ErrInternal
 	}

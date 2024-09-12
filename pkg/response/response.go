@@ -33,6 +33,8 @@ func ErrorEmptyField(c *gin.Context) {
 }
 
 var errorToStatusCode = map[error]int{
+	_error.ErrAlreadyLiked:   http.StatusBadRequest,
+	_error.ErrNotLiked:       http.StatusBadRequest,
 	_error.ErrNoOrganization: http.StatusBadRequest,
 	_error.ErrNotFound:       http.StatusNotFound,
 	_error.ErrConflict:       http.StatusConflict,

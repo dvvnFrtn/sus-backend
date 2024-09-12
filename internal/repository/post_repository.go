@@ -12,6 +12,9 @@ type PostRepository interface {
 	ListAll() ([]sqlc.FindPostByIdRow, error)
 	Delete(string) error
 	FindByOrganization(string) ([]sqlc.FindPostByIdRow, error)
+	LikedPost(sqlc.LikedPostParams) (sql.Result, error)
+	UnlikedPost(sqlc.UnlikedPostParams) error
+	IsLiked(sqlc.IsLikedParams) (int64, error)
 }
 
 type postRepository struct {
@@ -62,4 +65,16 @@ func (r *postRepository) FindByOrganization(orgId string) ([]sqlc.FindPostByIdRo
 	}
 
 	return posts, nil
+}
+
+func (r *postRepository) LikedPost(in sqlc.LikedPostParams) (sql.Result, error) {
+	return r.db.LikedPost(context.Background(), in)
+}
+
+func (r *postRepository) IsLiked(in sqlc.IsLikedParams) (int64, error) {
+	return r.db.IsLiked(context.Background(), in)
+}
+
+func (r *postRepository) UnlikedPost(in sqlc.UnlikedPostParams) error {
+	return r.db.UnlikedPost(context.Background(), in)
 }

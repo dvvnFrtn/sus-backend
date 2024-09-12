@@ -31,6 +31,8 @@ func IsDuplicateEntryError(err error) bool {
 }
 
 var (
+	ErrAlreadyLiked   = errors.New("you_have_already_liked_this_post")
+	ErrNotLiked       = errors.New("you_have_not_liked_this_post_yet")
 	ErrConflict       = errors.New("resource_already_exist")
 	ErrNoOrganization = errors.New("no_organization_associated")
 	ErrNoUpdated      = errors.New("no_resource_to_update")

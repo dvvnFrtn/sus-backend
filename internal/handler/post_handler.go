@@ -85,3 +85,29 @@ func (h *PostHandler) DeletePost(c *gin.Context) {
 
 	_response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
 }
+
+func (h *PostHandler) LikedPost(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+	postID := c.Param("id")
+
+	if err := h.serv.LikedPost(claims.ID, postID); err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Post Liked Successfully", nil)
+}
+
+func (h *PostHandler) UnlikedPost(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+	postID := c.Param("id")
+
+	if err := h.serv.UnlikedPost(claims.ID, postID); err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Post Unliked Successfully", nil)
+}
