@@ -6,6 +6,7 @@ import (
 	_error "sus-backend/pkg/err"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 func Success(c *gin.Context, httpCode int, msg string, data interface{}) {
@@ -44,6 +45,9 @@ var errorToStatusCode = map[error]int{
 }
 
 func mapErrorToStatusCode(err error) int {
+	if _, ok := err.(validator.ValidationErrors); ok {
+		return http.StatusBadRequest
+	}
 	if statusCode, exists := errorToStatusCode[err]; exists {
 		return statusCode
 	}
