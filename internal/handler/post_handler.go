@@ -144,3 +144,15 @@ func (h *PostHandler) CommentPost(c *gin.Context) {
 
 	_response.Success(c, http.StatusCreated, "Resource Created Successfully", response)
 }
+
+func (h *PostHandler) GetPostComments(c *gin.Context) {
+	postID := c.Param("id")
+
+	response, err := h.serv.GetPostComments(postID)
+	if err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Resource Retrievied Successfully", response)
+}

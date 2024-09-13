@@ -50,3 +50,9 @@ WHERE post_id = ?;
 INSERT INTO post_comments (
     id, user_id, post_id, content
 ) VALUES (?, ?, ?, ?);
+
+-- name: FindPostComments :many
+SELECT pc.id, pc.post_id, pc.user_id, pc.content, pc.created_at, u.name, u.img
+FROM post_comments pc
+INNER JOIN users u ON pc.user_id = u.id
+WHERE pc.post_id = ?;

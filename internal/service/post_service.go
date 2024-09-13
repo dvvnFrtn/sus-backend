@@ -22,6 +22,7 @@ type PostService interface {
 	UnlikedPost(string, string) error
 	GetPostLikes(string) ([]dto.PostLikesResponse, error)
 	CommentPost(string, string, dto.CommentPostRequest) (*dto.ResponseID, error)
+	GetPostComments(string) ([]dto.PostCommentsResponse, error)
 }
 
 type postService struct {
@@ -200,4 +201,18 @@ func (s *postService) CommentPost(authID string, postID string, req dto.CommentP
 	}
 
 	return dto.NewResponseID(params.ID), nil
+}
+
+func (s *postService) GetPostComments(postID string) ([]dto.PostCommentsResponse, error) {
+	if _, err := s.repo.FindById(postID); err != nil {
+		return nil, _error.ErrNotFound
+	}
+
+	postComments, err := s.repo.FindPostComments(postID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	return dto.ToPostCommentsResponse(&postComments), nil
 }

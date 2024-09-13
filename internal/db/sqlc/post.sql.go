@@ -155,6 +155,54 @@ func (q *Queries) FindPostByOrganization(ctx context.Context, organizationID str
 	return items, nil
 }
 
+const findPostComments = `-- name: FindPostComments :many
+SELECT pc.id, pc.post_id, pc.user_id, pc.content, pc.created_at, u.name, u.img
+FROM post_comments pc
+INNER JOIN users u ON pc.user_id = u.id
+WHERE pc.post_id = ?
+`
+
+type FindPostCommentsRow struct {
+	ID        string
+	PostID    string
+	UserID    string
+	Content   string
+	CreatedAt sql.NullTime
+	Name      string
+	Img       sql.NullString
+}
+
+func (q *Queries) FindPostComments(ctx context.Context, postID string) ([]FindPostCommentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, findPostComments, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindPostCommentsRow
+	for rows.Next() {
+		var i FindPostCommentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PostID,
+			&i.UserID,
+			&i.Content,
+			&i.CreatedAt,
+			&i.Name,
+			&i.Img,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findPostLikes = `-- name: FindPostLikes :many
 SELECT u.name, u.img, pl.liked_at, pl.post_id, pl.user_id
 FROM post_likes pl

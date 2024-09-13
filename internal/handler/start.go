@@ -31,6 +31,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 	r.GET("/posts", ph.GetAllPosts)
 	r.GET("/posts/:id", ph.GetPostById)
 	r.GET("/posts/:id/likes", ph.GetPostLikes)
+	r.GET("/posts/:id/comments", ph.GetPostComments)
 	r.POST("/posts/:id/likes", middleware.ValidateToken("user"), ph.LikedPost)
 	r.POST("/posts", middleware.ValidateToken("organization"), ph.CreatePost)
 	r.POST("/posts/:id/comments", middleware.ValidateToken("user"), ph.CommentPost)
