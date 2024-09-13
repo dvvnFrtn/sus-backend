@@ -54,6 +54,15 @@ func (q *Queries) CommentPost(ctx context.Context, arg CommentPostParams) (sql.R
 	)
 }
 
+const deleteComment = `-- name: DeleteComment :exec
+DELETE FROM post_comments WHERE id = ?
+`
+
+func (q *Queries) DeleteComment(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteComment, id)
+	return err
+}
+
 const deletePost = `-- name: DeletePost :exec
 DELETE FROM posts WHERE id = ?
 `
@@ -61,6 +70,38 @@ DELETE FROM posts WHERE id = ?
 func (q *Queries) DeletePost(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, deletePost, id)
 	return err
+}
+
+const findCommentById = `-- name: FindCommentById :one
+SELECT pc.id, pc.post_id, pc.user_id, pc.content, pc.created_at, u.name, u.img
+FROM post_comments pc
+INNER JOIN users u ON pc.user_id = u.id
+WHERE pc.id = ?
+`
+
+type FindCommentByIdRow struct {
+	ID        string
+	PostID    string
+	UserID    string
+	Content   string
+	CreatedAt sql.NullTime
+	Name      string
+	Img       sql.NullString
+}
+
+func (q *Queries) FindCommentById(ctx context.Context, id string) (FindCommentByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, findCommentById, id)
+	var i FindCommentByIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.PostID,
+		&i.UserID,
+		&i.Content,
+		&i.CreatedAt,
+		&i.Name,
+		&i.Img,
+	)
+	return i, err
 }
 
 const findPostById = `-- name: FindPostById :one

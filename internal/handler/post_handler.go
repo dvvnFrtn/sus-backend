@@ -127,7 +127,6 @@ func (h *PostHandler) GetPostLikes(c *gin.Context) {
 func (h *PostHandler) CommentPost(c *gin.Context) {
 	auth, _ := c.Get("user")
 	claims := auth.(*dto.UserClaims)
-	postID := c.Param("id")
 
 	request := new(dto.CommentPostRequest)
 	err := c.ShouldBindJSON(&request)
@@ -136,7 +135,7 @@ func (h *PostHandler) CommentPost(c *gin.Context) {
 		return
 	}
 
-	response, err := h.serv.CommentPost(claims.ID, postID, *request)
+	response, err := h.serv.CommentPost(claims.ID, *request)
 	if err != nil {
 		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 		return
@@ -155,4 +154,17 @@ func (h *PostHandler) GetPostComments(c *gin.Context) {
 	}
 
 	_response.Success(c, http.StatusOK, "Resource Retrievied Successfully", response)
+}
+
+func (h *PostHandler) DeleteComment(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+	commentID := c.Param("id")
+
+	if err := h.serv.DeleteComment(claims.ID, commentID); err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
 }

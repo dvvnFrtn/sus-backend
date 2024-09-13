@@ -18,6 +18,8 @@ type PostRepository interface {
 	FindPostLikes(string) ([]sqlc.FindPostLikesRow, error)
 	CommentPost(sqlc.CommentPostParams) (sql.Result, error)
 	FindPostComments(string) ([]sqlc.FindPostCommentsRow, error)
+	DeleteComment(string) error
+	FindCommentById(id string) (sqlc.FindCommentByIdRow, error)
 }
 
 type postRepository struct {
@@ -92,4 +94,12 @@ func (r *postRepository) CommentPost(in sqlc.CommentPostParams) (sql.Result, err
 
 func (r *postRepository) FindPostComments(id string) ([]sqlc.FindPostCommentsRow, error) {
 	return r.db.FindPostComments(context.Background(), id)
+}
+
+func (r *postRepository) DeleteComment(id string) error {
+	return r.db.DeleteComment(context.Background(), id)
+}
+
+func (r *postRepository) FindCommentById(id string) (sqlc.FindCommentByIdRow, error) {
+	return r.db.FindCommentById(context.Background(), id)
 }

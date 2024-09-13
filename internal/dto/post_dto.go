@@ -11,6 +11,7 @@ type PostCreateRequest struct {
 }
 
 type CommentPostRequest struct {
+	PostID  string `json:"post_id" binding:"required"`
 	Content string `json:"content" binding:"required"`
 }
 
@@ -33,6 +34,7 @@ type PostLikesResponse struct {
 }
 
 type PostCommentsResponse struct {
+	ID         string    `json:"id"`
 	UserID     string    `json:"user_id"`
 	Username   string    `json:"username"`
 	ProfileImg string    `json:"profile_img"`
@@ -107,6 +109,7 @@ func ToPostCommentsResponse(postComments *[]sqlc.FindPostCommentsRow) []PostComm
 	postCommentsResponses := []PostCommentsResponse{}
 	for _, pc := range *postComments {
 		postCommentResponse := PostCommentsResponse{
+			ID:         pc.ID,
 			UserID:     pc.UserID,
 			Username:   pc.Name,
 			ProfileImg: pc.Img.String,

@@ -21,8 +21,9 @@ type PostService interface {
 	LikedPost(string, string) error
 	UnlikedPost(string, string) error
 	GetPostLikes(string) ([]dto.PostLikesResponse, error)
-	CommentPost(string, string, dto.CommentPostRequest) (*dto.ResponseID, error)
+	CommentPost(string, dto.CommentPostRequest) (*dto.ResponseID, error)
 	GetPostComments(string) ([]dto.PostCommentsResponse, error)
+	DeleteComment(string, string) error
 }
 
 type postService struct {
@@ -188,15 +189,15 @@ func (s *postService) GetPostLikes(postID string) ([]dto.PostLikesResponse, erro
 	return dto.ToPostLikesResponse(&postLikes), nil
 }
 
-func (s *postService) CommentPost(authID string, postID string, req dto.CommentPostRequest) (*dto.ResponseID, error) {
-	if _, err := s.repo.FindById(postID); err != nil {
+func (s *postService) CommentPost(authID string, req dto.CommentPostRequest) (*dto.ResponseID, error) {
+	if _, err := s.repo.FindById(req.PostID); err != nil {
 		return nil, _error.ErrNotFound
 	}
 
 	params := sqlc.CommentPostParams{
 		ID:      uuid.New().String(),
 		UserID:  authID,
-		PostID:  postID,
+		PostID:  req.PostID,
 		Content: req.Content,
 	}
 
@@ -220,4 +221,27 @@ func (s *postService) GetPostComments(postID string) ([]dto.PostCommentsResponse
 	}
 
 	return dto.ToPostCommentsResponse(&postComments), nil
+}
+
+func (s *postService) DeleteComment(authID string, commentID string) error {
+	comment, err := s.repo.FindCommentById(commentID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return _error.ErrNoDeleted
+		}
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	// Error: resource not belongs to user
+	if comment.UserID != authID {
+		return _error.ErrForbidden
+	}
+
+	if err := s.repo.DeleteComment(commentID); err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	return nil
 }
