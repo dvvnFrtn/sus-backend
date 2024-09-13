@@ -61,7 +61,7 @@ func InitHandler(db *sql.DB) (*UserHandler, *OrganizationHandler, *PostHandler, 
 	organizationHand := NewOrganizationHandler(organizationServ)
 
 	postRepo := repository.NewPostRepository(queries)
-	postServ := service.NewPostService(postRepo)
+	postServ := service.NewPostService(postRepo, organizationRepo)
 	postHand := NewPostHandler(postServ)
 
 	eventRepo := repository.NewEventRepository(queries)

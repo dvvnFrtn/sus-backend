@@ -22,6 +22,7 @@ type PostResponse struct {
 	UpdatedAt    time.Time         `json:"updated_at"`
 	Organization *WithOrganization `json:"organization,omitempty"`
 	Likes        int               `json:"likes"`
+	Comments     int               `json:"comments"`
 }
 
 type PostLikesResponse struct {
@@ -57,7 +58,8 @@ func ToPostResponse(post *sqlc.FindPostByIdRow) *PostResponse {
 			Name:       post.Name,
 			ProfileImg: post.ProfileImg.String,
 		},
-		Likes: int(post.Likes),
+		Likes:    int(post.Likes),
+		Comments: int(post.Comments),
 	}
 }
 
@@ -75,7 +77,8 @@ func ToPostResponses(posts *[]sqlc.FindPostByIdRow) []PostResponse {
 				Name:       post.Name,
 				ProfileImg: post.ProfileImg.String,
 			},
-			Likes: int(post.Likes),
+			Likes:    int(post.Likes),
+			Comments: int(post.Comments),
 		}
 
 		postResponses = append(postResponses, postResponse)

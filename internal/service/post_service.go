@@ -26,11 +26,12 @@ type PostService interface {
 }
 
 type postService struct {
-	repo repository.PostRepository
+	repo    repository.PostRepository
+	orgRepo repository.OrganizationRepository
 }
 
-func NewPostService(repo repository.PostRepository) PostService {
-	return &postService{repo}
+func NewPostService(repo repository.PostRepository, orgRepo repository.OrganizationRepository) PostService {
+	return &postService{repo, orgRepo}
 }
 
 func (s *postService) CreatePost(organizationID string, req dto.PostCreateRequest) (*dto.ResponseID, error) {
@@ -68,6 +69,10 @@ func (s *postService) GetPostById(postID string) (*dto.PostResponse, error) {
 }
 
 func (s *postService) GetPostsByOrganization(organizationID string) ([]dto.PostResponse, error) {
+	if _, err := s.orgRepo.FindById(organizationID); err != nil {
+		return nil, _error.ErrNotFound
+	}
+
 	posts, err := s.repo.FindByOrganization(organizationID)
 	if err != nil {
 		fmt.Println(err)
