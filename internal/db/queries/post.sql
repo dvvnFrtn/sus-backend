@@ -4,24 +4,30 @@ INSERT INTO posts (
 ) VALUES (?, ?, ?, ?);
 
 -- name: FindPostById :one
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-WHERE p.id = ?;
+LEFT JOIN post_likes pl ON p.id = pl.post_id
+WHERE p.id = ?
+GROUP BY p.id;
 
 -- name: ListPosts :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes
 FROM posts p
-INNER JOIN organizations o ON p.organization_id = o.id;
+INNER JOIN organizations o ON p.organization_id = o.id
+LEFT JOIN post_likes pl ON p.id = pl.post_id
+GROUP BY p.id;
 
 -- name: DeletePost :exec
 DELETE FROM posts WHERE id = ?;
 
 -- name: FindPostByOrganization :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-WHERE p.organization_id = ?;
+LEFT JOIN post_likes pl ON p.id = pl.post_id
+WHERE p.organization_id = ?
+GROUP BY p.id;
 
 -- name: LikedPost :execresult
 INSERT INTO post_likes (

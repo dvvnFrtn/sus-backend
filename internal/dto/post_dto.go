@@ -13,22 +13,18 @@ type PostCreateRequest struct {
 type PostResponse struct {
 	ID           string            `json:"id"`
 	Content      string            `json:"content"`
-	ImageContent string            `json:"imageContent,omitempty"`
-	CreatedAt    time.Time         `json:"createdAt"`
-	UpdatedAt    time.Time         `json:"updatedAt"`
+	ImageContent string            `json:"image_content,omitempty"`
+	CreatedAt    time.Time         `json:"created_at"`
+	UpdatedAt    time.Time         `json:"updated_at"`
 	Organization *WithOrganization `json:"organization,omitempty"`
+	Likes        int               `json:"likes"`
 }
 
 type PostLikesResponse struct {
-	PostID  string    `json:"post_id"`
-	LikedAt time.Time `json:"liked_at"`
-	User    *WithUser `json:"user,omitempty"`
-}
-
-type WithUser struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Image string `json:"image,omitempty"`
+	UserID     string    `json:"user_id"`
+	Username   string    `json:"username"`
+	ProfileImg string    `json:"profile_img"`
+	LikedAt    time.Time `json:"liked_at"`
 }
 
 type WithOrganization struct {
@@ -49,6 +45,7 @@ func ToPostResponse(post *sqlc.FindPostByIdRow) *PostResponse {
 			Name:       post.Name,
 			ProfileImg: post.ProfileImg.String,
 		},
+		Likes: int(post.Likes),
 	}
 }
 
@@ -66,6 +63,7 @@ func ToPostResponses(posts *[]sqlc.FindPostByIdRow) []PostResponse {
 				Name:       post.Name,
 				ProfileImg: post.ProfileImg.String,
 			},
+			Likes: int(post.Likes),
 		}
 
 		postResponses = append(postResponses, postResponse)
@@ -78,13 +76,10 @@ func ToPostLikesResponse(postLikes *[]sqlc.FindPostLikesRow) []PostLikesResponse
 	postLikesResponses := []PostLikesResponse{}
 	for _, pl := range *postLikes {
 		postLikeResponse := PostLikesResponse{
-			PostID:  pl.PostID,
-			LikedAt: pl.LikedAt.Time,
-			User: &WithUser{
-				ID:    pl.UserID,
-				Name:  pl.Name,
-				Image: pl.Img.String,
-			},
+			UserID:     pl.UserID,
+			Username:   pl.Name,
+			ProfileImg: pl.Img.String,
+			LikedAt:    pl.LikedAt.Time,
 		}
 
 		postLikesResponses = append(postLikesResponses, postLikeResponse)

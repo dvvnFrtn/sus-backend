@@ -32,19 +32,6 @@ func (q *Queries) AddPost(ctx context.Context, arg AddPostParams) (sql.Result, e
 	)
 }
 
-const countPostLikes = `-- name: CountPostLikes :one
-SELECT COUNT(pl.id) FROM post_likes pl
-INNER JOIN posts p ON pl.post_id = p.id
-WHERE p.id = ?
-`
-
-func (q *Queries) CountPostLikes(ctx context.Context, id string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPostLikes, id)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const deletePost = `-- name: DeletePost :exec
 DELETE FROM posts WHERE id = ?
 `
@@ -55,10 +42,12 @@ func (q *Queries) DeletePost(ctx context.Context, id string) error {
 }
 
 const findPostById = `-- name: FindPostById :one
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
+LEFT JOIN post_likes pl ON p.id = pl.post_id
 WHERE p.id = ?
+GROUP BY p.id
 `
 
 type FindPostByIdRow struct {
@@ -70,6 +59,7 @@ type FindPostByIdRow struct {
 	OrganizationID string
 	Name           string
 	ProfileImg     sql.NullString
+	Likes          int64
 }
 
 func (q *Queries) FindPostById(ctx context.Context, id string) (FindPostByIdRow, error) {
@@ -84,15 +74,18 @@ func (q *Queries) FindPostById(ctx context.Context, id string) (FindPostByIdRow,
 		&i.OrganizationID,
 		&i.Name,
 		&i.ProfileImg,
+		&i.Likes,
 	)
 	return i, err
 }
 
 const findPostByOrganization = `-- name: FindPostByOrganization :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
+LEFT JOIN post_likes pl ON p.id = pl.post_id
 WHERE p.organization_id = ?
+GROUP BY p.id
 `
 
 type FindPostByOrganizationRow struct {
@@ -104,6 +97,7 @@ type FindPostByOrganizationRow struct {
 	OrganizationID string
 	Name           string
 	ProfileImg     sql.NullString
+	Likes          int64
 }
 
 func (q *Queries) FindPostByOrganization(ctx context.Context, organizationID string) ([]FindPostByOrganizationRow, error) {
@@ -124,6 +118,7 @@ func (q *Queries) FindPostByOrganization(ctx context.Context, organizationID str
 			&i.OrganizationID,
 			&i.Name,
 			&i.ProfileImg,
+			&i.Likes,
 		); err != nil {
 			return nil, err
 		}
@@ -214,9 +209,11 @@ func (q *Queries) LikedPost(ctx context.Context, arg LikedPostParams) (sql.Resul
 }
 
 const listPosts = `-- name: ListPosts :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
+LEFT JOIN post_likes pl ON p.id = pl.post_id
+GROUP BY p.id
 `
 
 type ListPostsRow struct {
@@ -228,6 +225,7 @@ type ListPostsRow struct {
 	OrganizationID string
 	Name           string
 	ProfileImg     sql.NullString
+	Likes          int64
 }
 
 func (q *Queries) ListPosts(ctx context.Context) ([]ListPostsRow, error) {
@@ -248,6 +246,7 @@ func (q *Queries) ListPosts(ctx context.Context) ([]ListPostsRow, error) {
 			&i.OrganizationID,
 			&i.Name,
 			&i.ProfileImg,
+			&i.Likes,
 		); err != nil {
 			return nil, err
 		}
