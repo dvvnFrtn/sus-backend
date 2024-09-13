@@ -32,6 +32,28 @@ func (q *Queries) AddPost(ctx context.Context, arg AddPostParams) (sql.Result, e
 	)
 }
 
+const commentPost = `-- name: CommentPost :execresult
+INSERT INTO post_comments (
+    id, user_id, post_id, content
+) VALUES (?, ?, ?, ?)
+`
+
+type CommentPostParams struct {
+	ID      string
+	UserID  string
+	PostID  string
+	Content string
+}
+
+func (q *Queries) CommentPost(ctx context.Context, arg CommentPostParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, commentPost,
+		arg.ID,
+		arg.UserID,
+		arg.PostID,
+		arg.Content,
+	)
+}
+
 const deletePost = `-- name: DeletePost :exec
 DELETE FROM posts WHERE id = ?
 `

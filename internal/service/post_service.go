@@ -21,6 +21,7 @@ type PostService interface {
 	LikedPost(string, string) error
 	UnlikedPost(string, string) error
 	GetPostLikes(string) ([]dto.PostLikesResponse, error)
+	CommentPost(string, string, dto.CommentPostRequest) (*dto.ResponseID, error)
 }
 
 type postService struct {
@@ -179,4 +180,24 @@ func (s *postService) GetPostLikes(postID string) ([]dto.PostLikesResponse, erro
 	}
 
 	return dto.ToPostLikesResponse(&postLikes), nil
+}
+
+func (s *postService) CommentPost(authID string, postID string, req dto.CommentPostRequest) (*dto.ResponseID, error) {
+	if _, err := s.repo.FindById(postID); err != nil {
+		return nil, _error.ErrNotFound
+	}
+
+	params := sqlc.CommentPostParams{
+		ID:      uuid.New().String(),
+		UserID:  authID,
+		PostID:  postID,
+		Content: req.Content,
+	}
+
+	if _, err := s.repo.CommentPost(params); err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	return dto.NewResponseID(params.ID), nil
 }

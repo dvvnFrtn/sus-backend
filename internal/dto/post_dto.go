@@ -10,6 +10,10 @@ type PostCreateRequest struct {
 	ImageContent string `json:"imageContent"`
 }
 
+type CommentPostRequest struct {
+	Content string `json:"content" binding:"required"`
+}
+
 type PostResponse struct {
 	ID           string            `json:"id"`
 	Content      string            `json:"content"`

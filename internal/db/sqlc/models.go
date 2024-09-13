@@ -79,6 +79,14 @@ type Post struct {
 	UpdatedAt      sql.NullTime
 }
 
+type PostComment struct {
+	ID        string
+	UserID    string
+	PostID    string
+	Content   string
+	CreatedAt sql.NullTime
+}
+
 type PostLike struct {
 	ID      int32
 	UserID  string

@@ -45,3 +45,8 @@ SELECT u.name, u.img, pl.liked_at, pl.post_id, pl.user_id
 FROM post_likes pl
 INNER JOIN users u ON pl.user_id = u.id
 WHERE post_id = ?;
+
+-- name: CommentPost :execresult
+INSERT INTO post_comments (
+    id, user_id, post_id, content
+) VALUES (?, ?, ?, ?);

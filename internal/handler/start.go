@@ -33,6 +33,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 	r.GET("/posts/:id/likes", ph.GetPostLikes)
 	r.POST("/posts/:id/likes", middleware.ValidateToken("user"), ph.LikedPost)
 	r.POST("/posts", middleware.ValidateToken("organization"), ph.CreatePost)
+	r.POST("/posts/:id/comments", middleware.ValidateToken("user"), ph.CommentPost)
 	r.DELETE("/posts/:id", middleware.ValidateToken("organization"), ph.DeletePost)
 	r.DELETE("/posts/:id/likes", middleware.ValidateToken("user"), ph.UnlikedPost)
 

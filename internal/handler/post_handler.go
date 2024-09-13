@@ -123,3 +123,24 @@ func (h *PostHandler) GetPostLikes(c *gin.Context) {
 
 	_response.Success(c, http.StatusOK, "Resource Retrievied Successfully", response)
 }
+
+func (h *PostHandler) CommentPost(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+	postID := c.Param("id")
+
+	request := new(dto.CommentPostRequest)
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		_response.FailOrError(c, http.StatusBadRequest, "invalid_request", err)
+		return
+	}
+
+	response, err := h.serv.CommentPost(claims.ID, postID, *request)
+	if err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusCreated, "Resource Created Successfully", response)
+}
