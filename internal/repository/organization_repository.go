@@ -12,6 +12,8 @@ type OrganizationRepository interface {
 	ListAll() ([]sqlc.Organization, error)
 	Update(sqlc.UpdateOrganizationParams) (sql.Result, error)
 	Delete(string) error
+	GetCategories() ([]sqlc.Category, error)
+	GetCategoriesForUser(string) ([]sqlc.Category, error)
 }
 
 type organizationRepository struct {
@@ -41,4 +43,12 @@ func (r *organizationRepository) Update(in sqlc.UpdateOrganizationParams) (sql.R
 
 func (r *organizationRepository) Delete(id string) error {
 	return r.db.DeleteOrganization(context.Background(), id)
+}
+
+func (r *organizationRepository) GetCategories() ([]sqlc.Category, error) {
+	return r.db.GetCategories(context.Background())
+}
+
+func (r *organizationRepository) GetCategoriesForUser(id string) ([]sqlc.Category, error) {
+	return r.db.GetCategoriesForUser(context.Background(), id)
 }

@@ -27,6 +27,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 	r.GET("/organizations", oh.ListAllOrganizations)
 	r.PUT("/organizations/:id", oh.UpdateOrganizations)
 	r.DELETE("/organizations/:id", oh.DeleteOrganization)
+	r.GET("organizations/categories", oh.GetCategories)
 
 	r.POST("/posts", ph.CreatePost)
 	r.GET("/posts", ph.ListAllPosts)
