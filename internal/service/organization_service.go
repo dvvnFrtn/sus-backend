@@ -18,6 +18,8 @@ type OrganizationService interface {
 	GetAllOrganizations() ([]dto.OrganizationResponse, error)
 	UpdateOrganization(string, string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
 	DeleteOrganization(string, string) error
+	Follow(string, string) error
+	Unfollow(string, string) error
 }
 
 type organizationService struct {
@@ -129,6 +131,72 @@ func (s *organizationService) DeleteOrganization(authID string, organizationID s
 	}
 
 	if err := s.repo.Delete(organizationID); err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	return nil
+}
+
+func (s *organizationService) Follow(authID string, organizationID string) error {
+	if _, err := s.repo.FindById(organizationID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return _error.ErrNotFound
+		}
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	params := sqlc.FollowOrganizaitonParams{
+		OrganizationID: organizationID,
+		FollowerID:     authID,
+	}
+
+	count, err := s.repo.IsFollowed(sqlc.IsFollowedParams(params))
+	if err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	// Error: already followed
+	if count >= 1 {
+		return _error.ErrAlreadyFollowed
+	}
+
+	if _, err := s.repo.Follow(params); err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	return nil
+}
+
+func (s *organizationService) Unfollow(authID string, organizationID string) error {
+	if _, err := s.repo.FindById(organizationID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return _error.ErrNotFound
+		}
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	params := sqlc.UnfollowOrganizationParams{
+		OrganizationID: organizationID,
+		FollowerID:     authID,
+	}
+
+	count, err := s.repo.IsFollowed(sqlc.IsFollowedParams(params))
+	if err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	// Error: not followed yet
+	if count <= 0 {
+		return _error.ErrNotFollowed
+	}
+
+	if err := s.repo.Unfollow(params); err != nil {
 		fmt.Println(err)
 		return _error.ErrInternal
 	}

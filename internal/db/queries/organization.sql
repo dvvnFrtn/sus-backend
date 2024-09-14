@@ -23,3 +23,16 @@ WHERE id = ?;
 
 -- name: IsOrganizationExist :one
 SELECT COUNT(1) FROM organizations INNER JOIN users ON organizations.user_id = users.id WHERE user_id = ?;
+
+-- name: FollowOrganizaiton :execresult
+INSERT INTO followers (
+    organization_id, follower_id
+) VALUES (
+    ?, ?
+);
+
+-- name: UnfollowOrganization :exec
+DELETE FROM followers WHERE organization_id = ? AND follower_id = ?;
+
+-- name: IsFollowed :one
+SELECT COUNT(1) FROM followers WHERE organization_id = ? AND follower_id = ?;

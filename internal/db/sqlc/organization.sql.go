@@ -86,6 +86,39 @@ func (q *Queries) FindOrganizationByUserId(ctx context.Context, userID string) (
 	return i, err
 }
 
+const followOrganizaiton = `-- name: FollowOrganizaiton :execresult
+INSERT INTO followers (
+    organization_id, follower_id
+) VALUES (
+    ?, ?
+)
+`
+
+type FollowOrganizaitonParams struct {
+	OrganizationID string
+	FollowerID     string
+}
+
+func (q *Queries) FollowOrganizaiton(ctx context.Context, arg FollowOrganizaitonParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, followOrganizaiton, arg.OrganizationID, arg.FollowerID)
+}
+
+const isFollowed = `-- name: IsFollowed :one
+SELECT COUNT(1) FROM followers WHERE organization_id = ? AND follower_id = ?
+`
+
+type IsFollowedParams struct {
+	OrganizationID string
+	FollowerID     string
+}
+
+func (q *Queries) IsFollowed(ctx context.Context, arg IsFollowedParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, isFollowed, arg.OrganizationID, arg.FollowerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const isOrganizationExist = `-- name: IsOrganizationExist :one
 SELECT COUNT(1) FROM organizations INNER JOIN users ON organizations.user_id = users.id WHERE user_id = ?
 `
@@ -131,6 +164,20 @@ func (q *Queries) ListOrganization(ctx context.Context) ([]Organization, error) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const unfollowOrganization = `-- name: UnfollowOrganization :exec
+DELETE FROM followers WHERE organization_id = ? AND follower_id = ?
+`
+
+type UnfollowOrganizationParams struct {
+	OrganizationID string
+	FollowerID     string
+}
+
+func (q *Queries) UnfollowOrganization(ctx context.Context, arg UnfollowOrganizationParams) error {
+	_, err := q.db.ExecContext(ctx, unfollowOrganization, arg.OrganizationID, arg.FollowerID)
+	return err
 }
 
 const updateOrganization = `-- name: UpdateOrganization :execresult

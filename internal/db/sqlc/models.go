@@ -50,6 +50,13 @@ type EventPricing struct {
 	UpdatedAt sql.NullTime
 }
 
+type Follower struct {
+	ID             int32
+	OrganizationID string
+	FollowerID     string
+	FollowedAt     sql.NullTime
+}
+
 type Organization struct {
 	ID          string
 	Name        string

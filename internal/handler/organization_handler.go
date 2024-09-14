@@ -90,3 +90,29 @@ func (h *OrganizationHandler) DeleteOrganization(c *gin.Context) {
 
 	_response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
 }
+
+func (h *OrganizationHandler) Follow(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+	organizationID := c.Param("id")
+
+	if err := h.serv.Follow(claims.ID, organizationID); err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Organization Followed Successfully", nil)
+}
+
+func (h *OrganizationHandler) Unfollow(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+	organizationID := c.Param("id")
+
+	if err := h.serv.Unfollow(claims.ID, organizationID); err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Organization Unfollowed Successfully", nil)
+}

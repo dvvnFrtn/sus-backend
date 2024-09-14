@@ -13,6 +13,9 @@ type OrganizationRepository interface {
 	Update(sqlc.UpdateOrganizationParams) (sql.Result, error)
 	Delete(string) error
 	IsExist(string) (int64, error)
+	Follow(sqlc.FollowOrganizaitonParams) (sql.Result, error)
+	Unfollow(sqlc.UnfollowOrganizationParams) error
+	IsFollowed(sqlc.IsFollowedParams) (int64, error)
 }
 
 type organizationRepository struct {
@@ -46,4 +49,16 @@ func (r *organizationRepository) Delete(id string) error {
 
 func (r *organizationRepository) IsExist(id string) (int64, error) {
 	return r.db.IsOrganizationExist(context.Background(), id)
+}
+
+func (r *organizationRepository) Follow(in sqlc.FollowOrganizaitonParams) (sql.Result, error) {
+	return r.db.FollowOrganizaiton(context.Background(), in)
+}
+
+func (r *organizationRepository) Unfollow(in sqlc.UnfollowOrganizationParams) error {
+	return r.db.UnfollowOrganization(context.Background(), in)
+}
+
+func (r *organizationRepository) IsFollowed(in sqlc.IsFollowedParams) (int64, error) {
+	return r.db.IsFollowed(context.Background(), in)
 }
