@@ -329,8 +329,11 @@ const listPosts = `-- name: ListPosts :many
 SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes, COUNT(pc.id) AS comments
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
+INNER JOIN followers f ON p.organization_id = f.organization_id
+INNER JOIN users u ON f.follower_id = u.id
 LEFT JOIN post_likes pl ON p.id = pl.post_id
 LEFT JOIN post_comments pc ON p.id = pc.post_id
+WHERE u.id = ?
 GROUP BY p.id
 `
 
@@ -347,8 +350,8 @@ type ListPostsRow struct {
 	Comments       int64
 }
 
-func (q *Queries) ListPosts(ctx context.Context) ([]ListPostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPosts)
+func (q *Queries) ListPosts(ctx context.Context, id string) ([]ListPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPosts, id)
 	if err != nil {
 		return nil, err
 	}

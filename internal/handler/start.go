@@ -31,7 +31,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 	r.POST("/organizations/:id/followers", middleware.ValidateToken("user"), oh.Follow)
 	r.DELETE("/organizations/:id/followers", middleware.ValidateToken("user"), oh.Unfollow)
 
-	r.GET("/posts", ph.GetAllPosts)
+	r.GET("/posts/timeline", middleware.ValidateToken("user"), ph.GetAllPosts)
 	r.GET("/posts/:id", ph.GetPostById)
 	r.GET("/posts/:id/likes", ph.GetPostLikes)
 	r.GET("/posts/:id/comments", ph.GetPostComments)

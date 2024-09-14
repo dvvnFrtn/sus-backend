@@ -9,7 +9,7 @@ import (
 type PostRepository interface {
 	Create(sqlc.AddPostParams) (sql.Result, error)
 	FindById(string) (sqlc.FindPostByIdRow, error)
-	ListAll() ([]sqlc.FindPostByIdRow, error)
+	ListAll(string) ([]sqlc.FindPostByIdRow, error)
 	Delete(string) error
 	FindByOrganization(string) ([]sqlc.FindPostByIdRow, error)
 	LikedPost(sqlc.LikedPostParams) (sql.Result, error)
@@ -38,8 +38,8 @@ func (r *postRepository) FindById(id string) (sqlc.FindPostByIdRow, error) {
 	return r.db.FindPostById(context.Background(), id)
 }
 
-func (r *postRepository) ListAll() ([]sqlc.FindPostByIdRow, error) {
-	rows, err := r.db.ListPosts(context.Background())
+func (r *postRepository) ListAll(id string) ([]sqlc.FindPostByIdRow, error) {
+	rows, err := r.db.ListPosts(context.Background(), id)
 	if err != nil {
 		return nil, err
 	}

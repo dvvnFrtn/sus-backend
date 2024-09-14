@@ -64,7 +64,10 @@ func (h *PostHandler) GetPostsByOrganization(c *gin.Context) {
 }
 
 func (h *PostHandler) GetAllPosts(c *gin.Context) {
-	response, err := h.serv.GetAllPosts()
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+
+	response, err := h.serv.GetAllPosts(claims.ID)
 	if err != nil {
 		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
 		return

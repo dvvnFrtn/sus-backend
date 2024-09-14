@@ -16,7 +16,7 @@ type PostService interface {
 	CreatePost(string, dto.PostCreateRequest) (*dto.ResponseID, error)
 	GetPostById(string) (*dto.PostResponse, error)
 	GetPostsByOrganization(string) ([]dto.PostResponse, error)
-	GetAllPosts() ([]dto.PostResponse, error)
+	GetAllPosts(string) ([]dto.PostResponse, error)
 	DeletePost(string, string) error
 	LikedPost(string, string) error
 	UnlikedPost(string, string) error
@@ -84,8 +84,8 @@ func (s *postService) GetPostsByOrganization(organizationID string) ([]dto.PostR
 }
 
 // TODO: implement using timeline, followed by user
-func (s *postService) GetAllPosts() ([]dto.PostResponse, error) {
-	posts, err := s.repo.ListAll()
+func (s *postService) GetAllPosts(authID string) ([]dto.PostResponse, error) {
+	posts, err := s.repo.ListAll(authID)
 	if err != nil {
 		fmt.Println(err)
 		return nil, _error.ErrInternal
