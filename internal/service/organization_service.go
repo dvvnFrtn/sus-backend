@@ -20,6 +20,7 @@ type OrganizationService interface {
 	DeleteOrganization(string, string) error
 	Follow(string, string) error
 	Unfollow(string, string) error
+	GetFollowers(string) ([]dto.OrganizationFollowersResponse, error)
 }
 
 type organizationService struct {
@@ -202,4 +203,22 @@ func (s *organizationService) Unfollow(authID string, organizationID string) err
 	}
 
 	return nil
+}
+
+func (s *organizationService) GetFollowers(organizationID string) ([]dto.OrganizationFollowersResponse, error) {
+	if _, err := s.repo.FindById(organizationID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, _error.ErrNotFound
+		}
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	followers, err := s.repo.GetFollowers(organizationID)
+	if err != nil {
+		fmt.Println()
+		return nil, _error.ErrInternal
+	}
+
+	return dto.ToOrganizationFollowersResponse(&followers), nil
 }

@@ -23,6 +23,13 @@ type OrganizationResponse struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+type OrganizationFollowersResponse struct {
+	FollowerID string    `json:"follower_id"`
+	Username   string    `json:"username"`
+	ProfileImg string    `json:"profile_img"`
+	FollowedAt time.Time `json:"followed_at"`
+}
+
 func ToOrganizationResponse(organization *sqlc.Organization) *OrganizationResponse {
 	return &OrganizationResponse{
 		ID:          organization.ID,
@@ -48,4 +55,20 @@ func ToOrganizationResponses(organizations *[]sqlc.Organization) []OrganizationR
 	}
 
 	return organizationResponses
+}
+
+func ToOrganizationFollowersResponse(followers *[]sqlc.FindOrganizaitonFollowersRow) []OrganizationFollowersResponse {
+	followersResponses := []OrganizationFollowersResponse{}
+	for _, follower := range *followers {
+		followersResponse := OrganizationFollowersResponse{
+			FollowerID: follower.FollowerID,
+			Username:   follower.Name,
+			ProfileImg: follower.Img.String,
+			FollowedAt: follower.FollowedAt.Time,
+		}
+
+		followersResponses = append(followersResponses, followersResponse)
+	}
+
+	return followersResponses
 }

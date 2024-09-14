@@ -27,6 +27,7 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 	r.POST("/organizations", middleware.ValidateToken("organization"), oh.CreateOrganization)
 	r.PUT("/organizations/:id", middleware.ValidateToken("organization"), oh.UpdateOrganizations)
 	r.DELETE("/organizations/:id", middleware.ValidateToken("organization"), oh.DeleteOrganization)
+	r.GET("/organizations/:id/followers", oh.GetFollowers)
 	r.POST("/organizations/:id/followers", middleware.ValidateToken("user"), oh.Follow)
 	r.DELETE("/organizations/:id/followers", middleware.ValidateToken("user"), oh.Unfollow)
 

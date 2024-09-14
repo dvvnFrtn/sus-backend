@@ -116,3 +116,15 @@ func (h *OrganizationHandler) Unfollow(c *gin.Context) {
 
 	_response.Success(c, http.StatusOK, "Organization Unfollowed Successfully", nil)
 }
+
+func (h *OrganizationHandler) GetFollowers(c *gin.Context) {
+	organizationID := c.Param("id")
+
+	response, err := h.serv.GetFollowers(organizationID)
+	if err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Resource Retrieved Successfully", response)
+}

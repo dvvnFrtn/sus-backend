@@ -36,3 +36,9 @@ DELETE FROM followers WHERE organization_id = ? AND follower_id = ?;
 
 -- name: IsFollowed :one
 SELECT COUNT(1) FROM followers WHERE organization_id = ? AND follower_id = ?;
+
+-- name: FindOrganizaitonFollowers :many
+SELECT f.follower_id, u.name, u.img, f.followed_at
+FROM followers f
+INNER JOIN users u ON f.follower_id = u.id
+WHERE f.organization_id = ?;
