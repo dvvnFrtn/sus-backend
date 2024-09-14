@@ -17,6 +17,8 @@ type OrganizationRepository interface {
 	Unfollow(sqlc.UnfollowOrganizationParams) error
 	IsFollowed(sqlc.IsFollowedParams) (int64, error)
 	GetFollowers(string) ([]sqlc.FindOrganizaitonFollowersRow, error)
+	GetCategories() ([]sqlc.Category, error)
+	GetCategoriesForUser(string) ([]sqlc.Category, error)
 }
 
 type organizationRepository struct {
@@ -66,4 +68,12 @@ func (r *organizationRepository) IsFollowed(in sqlc.IsFollowedParams) (int64, er
 
 func (r *organizationRepository) GetFollowers(id string) ([]sqlc.FindOrganizaitonFollowersRow, error) {
 	return r.db.FindOrganizaitonFollowers(context.Background(), id)
+}
+
+func (r *organizationRepository) GetCategories() ([]sqlc.Category, error) {
+	return r.db.GetCategories(context.Background())
+}
+
+func (r *organizationRepository) GetCategoriesForUser(id string) ([]sqlc.Category, error) {
+	return r.db.GetCategoriesForUser(context.Background(), id)
 }

@@ -22,8 +22,15 @@ type Activity struct {
 
 type Category struct {
 	ID           string
-	CategoryName string
 	CreatedAt    sql.NullTime
+	CategoryName string
+	GroupID      int32
+}
+
+type CategoryGroup struct {
+	ID        int32
+	GroupName string
+	CreatedAt sql.NullTime
 }
 
 type Event struct {

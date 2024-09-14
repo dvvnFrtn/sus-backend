@@ -18,3 +18,17 @@ WHERE FIND_IN_SET(category_id, ?);
 -- name: DeleteEvent :exec
 DELETE FROM events
 WHERE id = ?;
+
+-- name: CreateEventPricing :execresult
+INSERT INTO event_pricings (event_id, event_type, price)
+VALUES (?, ?, ?);
+
+-- name: GetEventPricings :many
+SELECT * FROM event_pricings WHERE event_id = ?;
+
+-- name: CreateSpeaker :execresult
+INSERT INTO speakers (id, event_id, name, title, description)
+VALUES (?, ?, ?, ?, ?);
+
+-- name: GetSpeakersByEventID :many
+SELECT * FROM speakers WHERE event_id = ?;

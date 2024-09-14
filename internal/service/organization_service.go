@@ -21,6 +21,7 @@ type OrganizationService interface {
 	Follow(string, string) error
 	Unfollow(string, string) error
 	GetFollowers(string) ([]dto.OrganizationFollowersResponse, error)
+	GetCategories() ([]sqlc.Category, error)
 }
 
 type organizationService struct {
@@ -221,4 +222,12 @@ func (s *organizationService) GetFollowers(organizationID string) ([]dto.Organiz
 	}
 
 	return dto.ToOrganizationFollowersResponse(&followers), nil
+}
+
+func (s *organizationService) GetCategories() ([]sqlc.Category, error) {
+	categories, err := s.repo.GetCategories()
+	if err != nil {
+		return nil, err
+	}
+	return categories, nil
 }

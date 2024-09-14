@@ -11,17 +11,54 @@ import (
 )
 
 const addCategory = `-- name: AddCategory :execresult
-INSERT INTO categories (id, category_name)
-VALUES (?, ?)
+INSERT INTO categories (id, category_name, group_id)
+VALUES (?, ?, ?)
 `
 
 type AddCategoryParams struct {
 	ID           string
 	CategoryName string
+	GroupID      int32
 }
 
 func (q *Queries) AddCategory(ctx context.Context, arg AddCategoryParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, addCategory, arg.ID, arg.CategoryName)
+	return q.db.ExecContext(ctx, addCategory, arg.ID, arg.CategoryName, arg.GroupID)
+}
+
+const addCategoryGroup = `-- name: AddCategoryGroup :execresult
+INSERT INTO category_groups (group_name)
+VALUES (?)
+`
+
+func (q *Queries) AddCategoryGroup(ctx context.Context, groupName string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, addCategoryGroup, groupName)
+}
+
+const categoryExists = `-- name: CategoryExists :one
+SELECT COUNT(1) FROM categories WHERE category_name = ? AND group_id = ?
+`
+
+type CategoryExistsParams struct {
+	CategoryName string
+	GroupID      int32
+}
+
+func (q *Queries) CategoryExists(ctx context.Context, arg CategoryExistsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, categoryExists, arg.CategoryName, arg.GroupID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const categoryGroupExists = `-- name: CategoryGroupExists :one
+SELECT COUNT(1) FROM category_groups WHERE group_name = ?
+`
+
+func (q *Queries) CategoryGroupExists(ctx context.Context, groupName string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, categoryGroupExists, groupName)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createUserCategory = `-- name: CreateUserCategory :execresult
@@ -39,7 +76,7 @@ func (q *Queries) CreateUserCategory(ctx context.Context, arg CreateUserCategory
 }
 
 const getCategories = `-- name: GetCategories :many
-SELECT id, category_name, created_at FROM categories
+SELECT id, created_at, category_name, group_id FROM categories
 `
 
 func (q *Queries) GetCategories(ctx context.Context) ([]Category, error) {
@@ -51,7 +88,12 @@ func (q *Queries) GetCategories(ctx context.Context) ([]Category, error) {
 	var items []Category
 	for rows.Next() {
 		var i Category
-		if err := rows.Scan(&i.ID, &i.CategoryName, &i.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.CategoryName,
+			&i.GroupID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -65,8 +107,53 @@ func (q *Queries) GetCategories(ctx context.Context) ([]Category, error) {
 	return items, nil
 }
 
+const getCategoriesForUser = `-- name: GetCategoriesForUser :many
+SELECT categories.id, categories.created_at, category_name, group_id FROM categories
+LEFT JOIN user_categories ON categories.id = category_id
+WHERE user_id = ?
+`
+
+func (q *Queries) GetCategoriesForUser(ctx context.Context, userID string) ([]Category, error) {
+	rows, err := q.db.QueryContext(ctx, getCategoriesForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Category
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.CategoryName,
+			&i.GroupID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCategoryGroupIDByName = `-- name: GetCategoryGroupIDByName :one
+SELECT id FROM category_groups WHERE group_name = ?
+`
+
+func (q *Queries) GetCategoryGroupIDByName(ctx context.Context, groupName string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getCategoryGroupIDByName, groupName)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
 const userCategoryExists = `-- name: UserCategoryExists :one
-SELECT COUNT(1) from user_categories
+SELECT COUNT(1) FROM user_categories
 WHERE category_id = ? AND user_id = ?
 `
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strconv"
 	"strings"
 	"sus-backend/internal/db/sqlc"
 	"sus-backend/internal/dto"
@@ -19,6 +20,9 @@ type EventService interface {
 	GetEventByID(string) (*dto.EventResponse, error)
 	CreateEvent(string, dto.CreateEventReq) (*dto.ResponseID, error)
 	DeleteEvent(string, string) error
+	GetPricingsForEvent(string) ([]dto.PricingResponse, error)
+	CreateEventPricing(dto.PricingCreateReq, string) (*dto.ResponseID, error)
+	GetSpeakersForEvent(string) ([]dto.SpeakerResponse, error)
 }
 
 type eventService struct {
@@ -35,19 +39,49 @@ func (s *eventService) GetEvents() ([]dto.EventResponse, error) {
 		return nil, err
 	}
 
-	return dto.ToEventResponses(&events), nil
+	eventResponses := []dto.EventResponse{}
+	for _, event := range events {
+		pricings, err := s.repo.GetPricingsForEvent(event.ID)
+		if err != nil {
+			return nil, err
+		}
+		speakers, err := s.repo.GetSpeakersForEvent(event.ID)
+		if err != nil {
+			return nil, err
+		}
+		eventResponse := dto.ToEventResponse(&event, &pricings, &speakers)
+		eventResponses = append(eventResponses, *eventResponse)
+	}
+
+	return eventResponses, nil
 }
 
 func (s *eventService) GetEventByID(id string) (*dto.EventResponse, error) {
 	event, err := s.repo.GetEventByID(id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("resource not found")
+			return nil, errors.New("event resource not found")
 		}
 		return nil, err
 	}
 
-	return dto.ToEventResponse(&event), nil
+	pricings, err := s.repo.GetPricingsForEvent(event.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("pricing resources not found")
+		}
+		return nil, err
+	}
+
+	speakers, err := s.repo.GetSpeakersForEvent(event.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("speakers resources not found")
+		}
+		return nil, err
+	}
+
+	return dto.ToEventResponse(&event, &pricings, &speakers), nil
 }
 
 func (s *eventService) CreateEvent(id string, arg dto.CreateEventReq) (*dto.ResponseID, error) {
@@ -114,4 +148,62 @@ func (s *eventService) DeleteEvent(id string, org_id string) error {
 
 	err = s.repo.DeleteEvent(id)
 	return err
+}
+
+func (s *eventService) GetPricingsForEvent(event_id string) ([]dto.PricingResponse, error) {
+	pricings, err := s.repo.GetPricingsForEvent(event_id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("resources not found")
+		}
+		return nil, err
+	}
+	return dto.ToPricingResponses(&pricings), nil
+}
+
+func (s *eventService) CreateEventPricing(arg dto.PricingCreateReq, event_id string) (*dto.ResponseID, error) {
+	input := sqlc.CreateEventPricingParams{
+		EventID:   event_id,
+		EventType: sql.NullString{String: arg.EventType, Valid: true},
+		Price:     sql.NullInt32{Int32: arg.Price, Valid: true},
+	}
+
+	ret, err := s.repo.CreateEventPricing(input)
+	if err != nil {
+		return nil, err
+	}
+
+	idRet, err := ret.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return dto.NewResponseID(strconv.FormatInt(idRet, 10)), nil
+}
+
+func (s *eventService) GetSpeakersForEvent(event_id string) ([]dto.SpeakerResponse, error) {
+	speakers, err := s.repo.GetSpeakersForEvent(event_id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("resources not found")
+		}
+		return nil, err
+	}
+	return dto.ToSpeakerResponses(&speakers), nil
+}
+
+func (s *eventService) CreateSpeaker(arg dto.SpeakerCreateReq, event_id string) (*dto.ResponseID, error) {
+	input := sqlc.CreateSpeakerParams{
+		ID:          uuid.New().String(),
+		EventID:     sql.NullString{String: event_id, Valid: true},
+		Name:        arg.Name,
+		Title:       sql.NullString{String: arg.Name, Valid: arg.Title != ""},
+		Description: sql.NullString{String: arg.Description, Valid: true},
+	}
+
+	_, err := s.repo.CreateSpeaker(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.NewResponseID(input.ID), nil
 }
