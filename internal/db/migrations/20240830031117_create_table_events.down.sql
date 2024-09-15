@@ -1,3 +1,2 @@
-DROP TABLE IF EXISTS speakers;
 DROP TABLE IF EXISTS event_pricings;
 DROP TABLE IF EXISTS events;

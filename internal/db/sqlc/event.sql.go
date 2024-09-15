@@ -14,8 +14,8 @@ import (
 const createEvent = `-- name: CreateEvent :execresult
 INSERT INTO events (
     id, organization_id, title, description,
-    max_registrant, date, start_time, end_time
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    max_registrant, date
+) VALUES (?, ?, ?, ?, ?, ?)
 `
 
 type CreateEventParams struct {
@@ -25,8 +25,6 @@ type CreateEventParams struct {
 	Description    sql.NullString
 	MaxRegistrant  sql.NullInt32
 	Date           time.Time
-	StartTime      sql.NullTime
-	EndTime        sql.NullTime
 }
 
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (sql.Result, error) {
@@ -37,8 +35,6 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (sql.R
 		arg.Description,
 		arg.MaxRegistrant,
 		arg.Date,
-		arg.StartTime,
-		arg.EndTime,
 	)
 }
 
@@ -58,13 +54,13 @@ func (q *Queries) CreateEventPricing(ctx context.Context, arg CreateEventPricing
 }
 
 const createSpeaker = `-- name: CreateSpeaker :execresult
-INSERT INTO speakers (id, event_id, name, title, description)
+INSERT INTO speakers (id, agenda_id, name, title, description)
 VALUES (?, ?, ?, ?, ?)
 `
 
 type CreateSpeakerParams struct {
 	ID          string
-	EventID     sql.NullString
+	AgendaID    string
 	Name        string
 	Title       sql.NullString
 	Description sql.NullString
@@ -73,7 +69,7 @@ type CreateSpeakerParams struct {
 func (q *Queries) CreateSpeaker(ctx context.Context, arg CreateSpeakerParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createSpeaker,
 		arg.ID,
-		arg.EventID,
+		arg.AgendaID,
 		arg.Name,
 		arg.Title,
 		arg.Description,
@@ -91,7 +87,7 @@ func (q *Queries) DeleteEvent(ctx context.Context, id string) error {
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, organization_id, title, img, description, registrant, max_registrant, date, start_time, end_time, created_at, updated_at FROM events WHERE id = ?
+SELECT id, organization_id, title, img, description, registrant, max_registrant, date, created_at, updated_at FROM events WHERE id = ?
 `
 
 func (q *Queries) GetEventByID(ctx context.Context, id string) (Event, error) {
@@ -106,8 +102,6 @@ func (q *Queries) GetEventByID(ctx context.Context, id string) (Event, error) {
 		&i.Registrant,
 		&i.MaxRegistrant,
 		&i.Date,
-		&i.StartTime,
-		&i.EndTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -149,7 +143,7 @@ func (q *Queries) GetEventPricings(ctx context.Context, eventID string) ([]Event
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT id, organization_id, title, img, description, registrant, max_registrant, date, start_time, end_time, created_at, updated_at FROM events
+SELECT id, organization_id, title, img, description, registrant, max_registrant, date, created_at, updated_at FROM events
 `
 
 func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
@@ -170,8 +164,6 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 			&i.Registrant,
 			&i.MaxRegistrant,
 			&i.Date,
-			&i.StartTime,
-			&i.EndTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -189,7 +181,7 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 }
 
 const getEventsByCategory = `-- name: GetEventsByCategory :many
-SELECT events.id, events.organization_id, events.title, events.img, events.description, events.registrant, events.max_registrant, events.date, events.start_time, events.end_time, events.created_at, events.updated_at FROM events
+SELECT events.id, events.organization_id, events.title, events.img, events.description, events.registrant, events.max_registrant, events.date, events.created_at, events.updated_at FROM events
 INNER JOIN user_categories ON user_id = organization_id
 WHERE FIND_IN_SET(category_id, ?)
 `
@@ -212,8 +204,6 @@ func (q *Queries) GetEventsByCategory(ctx context.Context, findINSET string) ([]
 			&i.Registrant,
 			&i.MaxRegistrant,
 			&i.Date,
-			&i.StartTime,
-			&i.EndTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -231,11 +221,11 @@ func (q *Queries) GetEventsByCategory(ctx context.Context, findINSET string) ([]
 }
 
 const getSpeakersByEventID = `-- name: GetSpeakersByEventID :many
-SELECT id, name, title, img, description, event_id, created_at, updated_at FROM speakers WHERE event_id = ?
+SELECT id, name, title, img, description, created_at, updated_at, agenda_id FROM speakers WHERE agenda_id = ?
 `
 
-func (q *Queries) GetSpeakersByEventID(ctx context.Context, eventID sql.NullString) ([]Speaker, error) {
-	rows, err := q.db.QueryContext(ctx, getSpeakersByEventID, eventID)
+func (q *Queries) GetSpeakersByEventID(ctx context.Context, agendaID string) ([]Speaker, error) {
+	rows, err := q.db.QueryContext(ctx, getSpeakersByEventID, agendaID)
 	if err != nil {
 		return nil, err
 	}
@@ -249,9 +239,9 @@ func (q *Queries) GetSpeakersByEventID(ctx context.Context, eventID sql.NullStri
 			&i.Title,
 			&i.Img,
 			&i.Description,
-			&i.EventID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AgendaID,
 		); err != nil {
 			return nil, err
 		}

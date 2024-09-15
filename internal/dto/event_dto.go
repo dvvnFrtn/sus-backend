@@ -18,8 +18,6 @@ type EventResponse struct {
 	EndTime        time.Time
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	Speakers       []SpeakerResponse
-	Pricings       []PricingResponse
 }
 
 func ToEventResponse(event *sqlc.Event, pricings *[]sqlc.EventPricing, speakers *[]sqlc.Speaker) *EventResponse {
@@ -32,12 +30,8 @@ func ToEventResponse(event *sqlc.Event, pricings *[]sqlc.EventPricing, speakers 
 		Registrant:     event.Registrant.Int32,
 		MaxRegistrant:  event.MaxRegistrant.Int32,
 		Date:           event.Date,
-		StartTime:      event.StartTime.Time,
-		EndTime:        event.EndTime.Time,
 		CreatedAt:      event.CreatedAt.Time,
 		UpdatedAt:      event.UpdatedAt.Time,
-		Pricings:       ToPricingResponses(pricings),
-		Speakers:       ToSpeakerResponses(speakers),
 	}
 }
 
@@ -53,8 +47,6 @@ func ToEventResponses(events *[]sqlc.Event) []EventResponse {
 			Registrant:     event.Registrant.Int32,
 			MaxRegistrant:  event.MaxRegistrant.Int32,
 			Date:           event.Date,
-			StartTime:      event.StartTime.Time,
-			EndTime:        event.EndTime.Time,
 			CreatedAt:      event.CreatedAt.Time,
 			UpdatedAt:      event.UpdatedAt.Time,
 		}
@@ -117,7 +109,7 @@ type PricingCreateReq struct {
 
 type SpeakerResponse struct {
 	ID          string
-	EventID     string
+	AgendaID    string
 	Name        string
 	Title       string
 	Img         string
@@ -129,7 +121,7 @@ type SpeakerResponse struct {
 func ToSpeakerResponse(speaker sqlc.Speaker) *SpeakerResponse {
 	return &SpeakerResponse{
 		ID:          speaker.ID,
-		EventID:     speaker.EventID.String,
+		AgendaID:    speaker.AgendaID,
 		Name:        speaker.Name,
 		Title:       speaker.Title.String,
 		Img:         speaker.Img.String,
@@ -144,7 +136,7 @@ func ToSpeakerResponses(speakers *[]sqlc.Speaker) []SpeakerResponse {
 	for _, speaker := range *speakers {
 		speakerResponse := SpeakerResponse{
 			ID:          speaker.ID,
-			EventID:     speaker.EventID.String,
+			AgendaID:    speaker.AgendaID,
 			Name:        speaker.Name,
 			Title:       speaker.Title.String,
 			Img:         speaker.Img.String,

@@ -108,8 +108,6 @@ func (s *eventService) CreateEvent(id string, arg dto.CreateEventReq) (*dto.Resp
 		Description:    sql.NullString{String: arg.Description, Valid: arg.Description != ""},
 		MaxRegistrant:  sql.NullInt32{Int32: arg.MaxRegistrant, Valid: true},
 		Date:           date,
-		StartTime:      sql.NullTime{Time: startTime, Valid: !startTime.IsZero()},
-		EndTime:        sql.NullTime{Time: endTime, Valid: !endTime.IsZero()},
 	}
 
 	_, err = s.repo.CreateEvent(input)
@@ -191,10 +189,10 @@ func (s *eventService) GetSpeakersForEvent(event_id string) ([]dto.SpeakerRespon
 	return dto.ToSpeakerResponses(&speakers), nil
 }
 
-func (s *eventService) CreateSpeaker(arg dto.SpeakerCreateReq, event_id string) (*dto.ResponseID, error) {
+func (s *eventService) CreateSpeaker(arg dto.SpeakerCreateReq, agenda_id string) (*dto.ResponseID, error) {
 	input := sqlc.CreateSpeakerParams{
 		ID:          uuid.New().String(),
-		EventID:     sql.NullString{String: event_id, Valid: true},
+		AgendaID:    agenda_id,
 		Name:        arg.Name,
 		Title:       sql.NullString{String: arg.Name, Valid: arg.Title != ""},
 		Description: sql.NullString{String: arg.Description, Valid: true},

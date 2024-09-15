@@ -35,10 +35,20 @@ type Event struct {
 	Registrant     sql.NullInt32
 	MaxRegistrant  sql.NullInt32
 	Date           time.Time
-	StartTime      sql.NullTime
-	EndTime        sql.NullTime
 	CreatedAt      sql.NullTime
 	UpdatedAt      sql.NullTime
+}
+
+type EventAgenda struct {
+	ID          string
+	EventID     string
+	Title       sql.NullString
+	Description sql.NullString
+	StartTime   sql.NullTime
+	EndTime     sql.NullTime
+	Location    sql.NullString
+	CreatedAt   sql.NullTime
+	UpdatedAt   sql.NullTime
 }
 
 type EventPricing struct {
@@ -84,9 +94,9 @@ type Speaker struct {
 	Title       sql.NullString
 	Img         sql.NullString
 	Description sql.NullString
-	EventID     sql.NullString
 	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
+	AgendaID    string
 }
 
 type User struct {

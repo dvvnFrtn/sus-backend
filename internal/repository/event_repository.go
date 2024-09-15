@@ -54,8 +54,8 @@ func (r *eventRepository) CreateEventPricing(input sqlc.CreateEventPricingParams
 	return r.db.CreateEventPricing(context.Background(), input)
 }
 
-func (r *eventRepository) GetSpeakersForEvent(event_id string) ([]sqlc.Speaker, error) {
-	return r.db.GetSpeakersByEventID(context.Background(), sql.NullString{String: event_id, Valid: true})
+func (r *eventRepository) GetSpeakersForEvent(agenda_id string) ([]sqlc.Speaker, error) {
+	return r.db.GetSpeakersByEventID(context.Background(), agenda_id)
 }
 
 func (r *eventRepository) CreateSpeaker(input sqlc.CreateSpeakerParams) (sql.Result, error) {
