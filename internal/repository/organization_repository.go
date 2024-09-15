@@ -12,6 +12,13 @@ type OrganizationRepository interface {
 	ListAll() ([]sqlc.Organization, error)
 	Update(sqlc.UpdateOrganizationParams) (sql.Result, error)
 	Delete(string) error
+	IsExist(string) (int64, error)
+	Follow(sqlc.FollowOrganizaitonParams) (sql.Result, error)
+	Unfollow(sqlc.UnfollowOrganizationParams) error
+	IsFollowed(sqlc.IsFollowedParams) (int64, error)
+	GetFollowers(string) ([]sqlc.FindOrganizaitonFollowersRow, error)
+	GetCategories() ([]sqlc.Category, error)
+	GetCategoriesForUser(string) ([]sqlc.Category, error)
 }
 
 type organizationRepository struct {
@@ -41,4 +48,32 @@ func (r *organizationRepository) Update(in sqlc.UpdateOrganizationParams) (sql.R
 
 func (r *organizationRepository) Delete(id string) error {
 	return r.db.DeleteOrganization(context.Background(), id)
+}
+
+func (r *organizationRepository) IsExist(id string) (int64, error) {
+	return r.db.IsOrganizationExist(context.Background(), id)
+}
+
+func (r *organizationRepository) Follow(in sqlc.FollowOrganizaitonParams) (sql.Result, error) {
+	return r.db.FollowOrganizaiton(context.Background(), in)
+}
+
+func (r *organizationRepository) Unfollow(in sqlc.UnfollowOrganizationParams) error {
+	return r.db.UnfollowOrganization(context.Background(), in)
+}
+
+func (r *organizationRepository) IsFollowed(in sqlc.IsFollowedParams) (int64, error) {
+	return r.db.IsFollowed(context.Background(), in)
+}
+
+func (r *organizationRepository) GetFollowers(id string) ([]sqlc.FindOrganizaitonFollowersRow, error) {
+	return r.db.FindOrganizaitonFollowers(context.Background(), id)
+}
+
+func (r *organizationRepository) GetCategories() ([]sqlc.Category, error) {
+	return r.db.GetCategories(context.Background())
+}
+
+func (r *organizationRepository) GetCategoriesForUser(id string) ([]sqlc.Category, error) {
+	return r.db.GetCategoriesForUser(context.Background(), id)
 }
