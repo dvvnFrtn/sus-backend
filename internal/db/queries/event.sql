@@ -15,6 +15,14 @@ SELECT events.* FROM events
 INNER JOIN user_categories ON user_id = organization_id
 WHERE FIND_IN_SET(category_id, ?);
 
+-- name: GetEventsByOrganizationID :many
+SELECT * FROM events WHERE organization_id = ?;
+
+-- name: GetEventsOfFollowedOrganizations :many
+SELECT events.* FROM events
+INNER JOIN followers ON organization_id = followers.organization_id
+WHERE follower_id = ?;
+
 -- name: DeleteEvent :exec
 DELETE FROM events
 WHERE id = ?;
@@ -26,9 +34,12 @@ VALUES (?, ?, ?);
 -- name: GetEventPricings :many
 SELECT * FROM event_pricings WHERE event_id = ?;
 
+-- name: GetAgendasByEventID :many
+SELECT * FROM event_agendas WHERE event_id = ?;
+
 -- name: CreateSpeaker :execresult
 INSERT INTO speakers (id, agenda_id, name, title, description)
 VALUES (?, ?, ?, ?, ?);
 
--- name: GetSpeakersByEventID :many
+-- name: GetSpeakersByAgendaID :many
 SELECT * FROM speakers WHERE agenda_id = ?;
