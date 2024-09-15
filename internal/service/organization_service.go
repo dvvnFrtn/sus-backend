@@ -3,20 +3,24 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"sus-backend/internal/db/sqlc"
 	"sus-backend/internal/dto"
 	"sus-backend/internal/repository"
-	"time"
+	_error "sus-backend/pkg/err"
 
 	"github.com/google/uuid"
 )
 
 type OrganizationService interface {
-	CreateOrganization(dto.OrganizationCreateRequest) (*dto.ResponseID, error)
-	FindOrganizationById(string) (*dto.OrganizationResponse, error)
-	ListAllOrganizations() ([]dto.OrganizationResponse, error)
-	UpdateOrganization(string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
-	DeleteOrganization(string) error
+	CreateOrganization(string, dto.OrganizationCreateRequest) (*dto.ResponseID, error)
+	GetOrganizationById(string) (*dto.OrganizationResponse, error)
+	GetAllOrganizations() ([]dto.OrganizationResponse, error)
+	UpdateOrganization(string, string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
+	DeleteOrganization(string, string) error
+	Follow(string, string) error
+	Unfollow(string, string) error
+	GetFollowers(string) ([]dto.OrganizationFollowersResponse, error)
 	GetCategories() ([]sqlc.Category, error)
 }
 
@@ -28,85 +32,196 @@ func NewOrganizationService(repo repository.OrganizationRepository) Organization
 	return &organizationService{repo}
 }
 
-func (s *organizationService) CreateOrganization(req dto.OrganizationCreateRequest) (*dto.ResponseID, error) {
-	organization := sqlc.AddOrganizationParams{
+func (s *organizationService) CreateOrganization(authID string, req dto.OrganizationCreateRequest) (*dto.ResponseID, error) {
+	count, err := s.repo.IsExist(authID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	// Error: one organizer only can create one organization
+	if count >= 1 {
+		return nil, _error.ErrConflict
+	}
+
+	params := sqlc.AddOrganizationParams{
 		ID:          uuid.New().String(),
+		UserID:      authID,
 		Name:        req.Name,
 		Description: req.Description,
-		HeaderImg:   sql.NullString{},
-		ProfileImg:  sql.NullString{},
-		CreatedAt:   sql.NullTime{Time: time.Now(), Valid: true},
-		UpdatedAt:   sql.NullTime{Time: time.Now(), Valid: true},
+		// Not Implemented
+		HeaderImg:  sql.NullString{},
+		ProfileImg: sql.NullString{},
 	}
 
-	_, err := s.repo.Create(organization)
-	if err != nil {
-		return nil, err
+	if _, err := s.repo.Create(params); err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
 	}
 
-	return dto.NewResponseID(organization.ID), nil
+	return dto.NewResponseID(params.ID), nil
 }
 
-func (s *organizationService) FindOrganizationById(id string) (*dto.OrganizationResponse, error) {
+func (s *organizationService) GetOrganizationById(id string) (*dto.OrganizationResponse, error) {
 	organization, err := s.repo.FindById(id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("resource_not_found")
+			return nil, _error.ErrNotFound
 		}
-		return nil, err
+		fmt.Println(err)
+		return nil, _error.ErrInternal
 	}
 
 	return dto.ToOrganizationResponse(&organization), nil
 }
 
-func (s *organizationService) ListAllOrganizations() ([]dto.OrganizationResponse, error) {
+func (s *organizationService) GetAllOrganizations() ([]dto.OrganizationResponse, error) {
 	organizations, err := s.repo.ListAll()
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
+		return nil, _error.ErrInternal
 	}
 
 	return dto.ToOrganizationResponses(&organizations), nil
 }
 
-func (s *organizationService) UpdateOrganization(id string, req dto.OrganizationUpdateRequest) (*dto.ResponseID, error) {
-	organization, err := s.repo.FindById(id)
+func (s *organizationService) UpdateOrganization(authID string, organizationID string, req dto.OrganizationUpdateRequest) (*dto.ResponseID, error) {
+	organization, err := s.repo.FindById(organizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("no_resource_to_update")
+			return nil, _error.ErrNoUpdated
 		}
-		return nil, err
+		fmt.Println(err)
+		return nil, _error.ErrInternal
 	}
 
-	organizationParams := &sqlc.UpdateOrganizationParams{
+	// Error: resource not belongs to authenticated user
+	if organization.UserID != authID {
+		return nil, _error.ErrForbidden
+	}
+
+	params := sqlc.UpdateOrganizationParams{
 		Name:        req.Name,
 		Description: req.Description,
-		HeaderImg:   sql.NullString{Valid: false},
-		ProfileImg:  sql.NullString{Valid: false},
-		ID:          organization.ID,
+		// Not Implemented
+		HeaderImg:  sql.NullString{},
+		ProfileImg: sql.NullString{},
+		ID:         organizationID,
 	}
 
-	_, err = s.repo.Update(*organizationParams)
-	if err != nil {
-		return nil, err
+	if _, err := s.repo.Update(params); err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
 	}
 
-	return dto.NewResponseID(organization.ID), nil
+	return dto.NewResponseID(params.ID), nil
 }
 
-func (s *organizationService) DeleteOrganization(id string) error {
-	_, err := s.repo.FindById(id)
+func (s *organizationService) DeleteOrganization(authID string, organizationID string) error {
+	organization, err := s.repo.FindById(organizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return errors.New("no_resource_to_delete")
+			return _error.ErrNoDeleted
 		}
-		return err
+		fmt.Println(err)
+		return _error.ErrInternal
 	}
 
-	if err := s.repo.Delete(id); err != nil {
-		return err
+	// Error: resource not belongs to authenticated user
+	if organization.UserID != authID {
+		return _error.ErrForbidden
+	}
+
+	if err := s.repo.Delete(organizationID); err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
 	}
 
 	return nil
+}
+
+func (s *organizationService) Follow(authID string, organizationID string) error {
+	if _, err := s.repo.FindById(organizationID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return _error.ErrNotFound
+		}
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	params := sqlc.FollowOrganizaitonParams{
+		OrganizationID: organizationID,
+		FollowerID:     authID,
+	}
+
+	count, err := s.repo.IsFollowed(sqlc.IsFollowedParams(params))
+	if err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	// Error: already followed
+	if count >= 1 {
+		return _error.ErrAlreadyFollowed
+	}
+
+	if _, err := s.repo.Follow(params); err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	return nil
+}
+
+func (s *organizationService) Unfollow(authID string, organizationID string) error {
+	if _, err := s.repo.FindById(organizationID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return _error.ErrNotFound
+		}
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	params := sqlc.UnfollowOrganizationParams{
+		OrganizationID: organizationID,
+		FollowerID:     authID,
+	}
+
+	count, err := s.repo.IsFollowed(sqlc.IsFollowedParams(params))
+	if err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	// Error: not followed yet
+	if count <= 0 {
+		return _error.ErrNotFollowed
+	}
+
+	if err := s.repo.Unfollow(params); err != nil {
+		fmt.Println(err)
+		return _error.ErrInternal
+	}
+
+	return nil
+}
+
+func (s *organizationService) GetFollowers(organizationID string) ([]dto.OrganizationFollowersResponse, error) {
+	if _, err := s.repo.FindById(organizationID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, _error.ErrNotFound
+		}
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	followers, err := s.repo.GetFollowers(organizationID)
+	if err != nil {
+		fmt.Println()
+		return nil, _error.ErrInternal
+	}
+
+	return dto.ToOrganizationFollowersResponse(&followers), nil
 }
 
 func (s *organizationService) GetCategories() ([]sqlc.Category, error) {
