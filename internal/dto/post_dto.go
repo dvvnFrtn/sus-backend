@@ -60,8 +60,8 @@ func ToPostResponse(post *sqlc.FindPostByIdRow) *PostResponse {
 			Name:       post.Name,
 			ProfileImg: post.ProfileImg.String,
 		},
-		Likes:    int(post.Likes),
-		Comments: int(post.Comments),
+		Likes:    int(post.LikeCount),
+		Comments: int(post.CommentCount),
 	}
 }
 
@@ -79,8 +79,8 @@ func ToPostResponses(posts *[]sqlc.FindPostByIdRow) []PostResponse {
 				Name:       post.Name,
 				ProfileImg: post.ProfileImg.String,
 			},
-			Likes:    int(post.Likes),
-			Comments: int(post.Comments),
+			Likes:    int(post.LikeCount),
+			Comments: int(post.CommentCount),
 		}
 
 		postResponses = append(postResponses, postResponse)

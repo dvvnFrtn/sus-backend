@@ -4,22 +4,22 @@ INSERT INTO posts (
 ) VALUES (?, ?, ?, ?);
 
 -- name: FindPostById :one
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes, COUNT(pc.id) AS comments
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img,
+    (SELECT COUNT(pl.id) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+    (SELECT COUNT(pc.id) FROM post_comments pc WHERE pc.post_id = p.id) AS comment_count
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-LEFT JOIN post_likes pl ON p.id = pl.post_id
-LEFT JOIN post_comments pc ON p.id = pc.post_id
 WHERE p.id = ?
 GROUP BY p.id;
 
 -- name: ListPosts :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes, COUNT(pc.id) AS comments
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img,
+    (SELECT COUNT(pl.id) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+    (SELECT COUNT(pc.id) FROM post_comments pc WHERE pc.post_id = p.id) AS comment_count
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-INNER JOIN followers f ON p.organization_id = f.organization_id
+INNER JOIN followers f ON o.id = f.organization_id
 INNER JOIN users u ON f.follower_id = u.id
-LEFT JOIN post_likes pl ON p.id = pl.post_id
-LEFT JOIN post_comments pc ON p.id = pc.post_id
 WHERE u.id = ?
 GROUP BY p.id;
 
@@ -27,11 +27,11 @@ GROUP BY p.id;
 DELETE FROM posts WHERE id = ?;
 
 -- name: FindPostByOrganization :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes, COUNT(pc.id) AS comments
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img,
+    (SELECT COUNT(pl.id) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+    (SELECT COUNT(pc.id) FROM post_comments pc WHERE pc.post_id = p.id) AS comment_count
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-LEFT JOIN post_likes pl ON p.id = pl.post_id
-LEFT JOIN post_comments pc ON p.id = pc.post_id
 WHERE p.organization_id = ?
 GROUP BY p.id;
 

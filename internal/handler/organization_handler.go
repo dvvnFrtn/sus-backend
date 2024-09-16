@@ -132,8 +132,8 @@ func (h *OrganizationHandler) GetFollowers(c *gin.Context) {
 func (h *OrganizationHandler) GetCategories(c *gin.Context) {
 	data, err := h.serv.GetCategories()
 	if err != nil {
-		response.FailOrError(c, 500, "Failed getting categories", err)
+		_response.FailOrError(c, 500, "Failed getting categories", err)
 		return
 	}
-	response.Success(c, 200, "Success getting categories", data)
+	_response.Success(c, 200, "Success getting categories", data)
 }
