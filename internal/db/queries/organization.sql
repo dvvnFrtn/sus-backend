@@ -12,6 +12,11 @@ SELECT * FROM organizations WHERE user_id = ?;
 -- name: ListOrganization :many
 SELECT * FROM organizations;
 
+-- name: FindFollowedOrganizations :many
+SELECT o.* FROM organizations o
+INNER JOIN followers f ON o.id = f.organization_id
+WHERE f.follower_id = ?;
+
 -- name: UpdateOrganization :execresult
 UPDATE organizations
 SET name = ?, description = ?, header_img = ?, profile_img = ?
