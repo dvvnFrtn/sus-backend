@@ -105,11 +105,11 @@ func (q *Queries) FindCommentById(ctx context.Context, id string) (FindCommentBy
 }
 
 const findPostById = `-- name: FindPostById :one
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes, COUNT(pc.id) AS comments
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img,
+    (SELECT COUNT(pl.id) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+    (SELECT COUNT(pc.id) FROM post_comments pc WHERE pc.post_id = p.id) AS comment_count
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-LEFT JOIN post_likes pl ON p.id = pl.post_id
-LEFT JOIN post_comments pc ON p.id = pc.post_id
 WHERE p.id = ?
 GROUP BY p.id
 `
@@ -123,8 +123,8 @@ type FindPostByIdRow struct {
 	OrganizationID string
 	Name           string
 	ProfileImg     sql.NullString
-	Likes          int64
-	Comments       int64
+	LikeCount      int64
+	CommentCount   int64
 }
 
 func (q *Queries) FindPostById(ctx context.Context, id string) (FindPostByIdRow, error) {
@@ -139,18 +139,18 @@ func (q *Queries) FindPostById(ctx context.Context, id string) (FindPostByIdRow,
 		&i.OrganizationID,
 		&i.Name,
 		&i.ProfileImg,
-		&i.Likes,
-		&i.Comments,
+		&i.LikeCount,
+		&i.CommentCount,
 	)
 	return i, err
 }
 
 const findPostByOrganization = `-- name: FindPostByOrganization :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes, COUNT(pc.id) AS comments
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img,
+    (SELECT COUNT(pl.id) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+    (SELECT COUNT(pc.id) FROM post_comments pc WHERE pc.post_id = p.id) AS comment_count
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-LEFT JOIN post_likes pl ON p.id = pl.post_id
-LEFT JOIN post_comments pc ON p.id = pc.post_id
 WHERE p.organization_id = ?
 GROUP BY p.id
 `
@@ -164,8 +164,8 @@ type FindPostByOrganizationRow struct {
 	OrganizationID string
 	Name           string
 	ProfileImg     sql.NullString
-	Likes          int64
-	Comments       int64
+	LikeCount      int64
+	CommentCount   int64
 }
 
 func (q *Queries) FindPostByOrganization(ctx context.Context, organizationID string) ([]FindPostByOrganizationRow, error) {
@@ -186,8 +186,8 @@ func (q *Queries) FindPostByOrganization(ctx context.Context, organizationID str
 			&i.OrganizationID,
 			&i.Name,
 			&i.ProfileImg,
-			&i.Likes,
-			&i.Comments,
+			&i.LikeCount,
+			&i.CommentCount,
 		); err != nil {
 			return nil, err
 		}
@@ -326,13 +326,13 @@ func (q *Queries) LikedPost(ctx context.Context, arg LikedPostParams) (sql.Resul
 }
 
 const listPosts = `-- name: ListPosts :many
-SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img, COUNT(pl.id) AS likes, COUNT(pc.id) AS comments
+SELECT p.id, p.content, p.image_content, p.created_at, p.updated_at, p.organization_id, o.name, o.profile_img,
+    (SELECT COUNT(pl.id) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+    (SELECT COUNT(pc.id) FROM post_comments pc WHERE pc.post_id = p.id) AS comment_count
 FROM posts p
 INNER JOIN organizations o ON p.organization_id = o.id
-INNER JOIN followers f ON p.organization_id = f.organization_id
+INNER JOIN followers f ON o.id = f.organization_id
 INNER JOIN users u ON f.follower_id = u.id
-LEFT JOIN post_likes pl ON p.id = pl.post_id
-LEFT JOIN post_comments pc ON p.id = pc.post_id
 WHERE u.id = ?
 GROUP BY p.id
 `
@@ -346,8 +346,8 @@ type ListPostsRow struct {
 	OrganizationID string
 	Name           string
 	ProfileImg     sql.NullString
-	Likes          int64
-	Comments       int64
+	LikeCount      int64
+	CommentCount   int64
 }
 
 func (q *Queries) ListPosts(ctx context.Context, id string) ([]ListPostsRow, error) {
@@ -368,8 +368,8 @@ func (q *Queries) ListPosts(ctx context.Context, id string) ([]ListPostsRow, err
 			&i.OrganizationID,
 			&i.Name,
 			&i.ProfileImg,
-			&i.Likes,
-			&i.Comments,
+			&i.LikeCount,
+			&i.CommentCount,
 		); err != nil {
 			return nil, err
 		}

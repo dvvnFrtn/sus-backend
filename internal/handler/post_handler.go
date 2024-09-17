@@ -36,7 +36,7 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusCreated, "Resource Created Successfully", response)
+	_response.Success(c, http.StatusCreated, "Post Created Successfully", response)
 }
 
 func (h *PostHandler) GetPostById(c *gin.Context) {
@@ -48,7 +48,7 @@ func (h *PostHandler) GetPostById(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusFound, "Resource Successfully Retrieved", response)
+	_response.Success(c, http.StatusFound, "Post Retrieved Successfully", response)
 }
 
 func (h *PostHandler) GetPostsByOrganization(c *gin.Context) {
@@ -60,7 +60,7 @@ func (h *PostHandler) GetPostsByOrganization(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusOK, "Resources Successfully Retrievied", response)
+	_response.Success(c, http.StatusOK, "Posts Retrieved Successfully", response)
 }
 
 func (h *PostHandler) GetAllPosts(c *gin.Context) {
@@ -73,7 +73,7 @@ func (h *PostHandler) GetAllPosts(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusOK, "Resources Successfully Retrievied", response)
+	_response.Success(c, http.StatusOK, "Posts Retrieved Successfully", response)
 }
 
 func (h *PostHandler) DeletePost(c *gin.Context) {
@@ -86,7 +86,7 @@ func (h *PostHandler) DeletePost(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
+	_response.Success(c, http.StatusNoContent, "Post Deleted Successfully", nil)
 }
 
 func (h *PostHandler) LikedPost(c *gin.Context) {
@@ -124,7 +124,7 @@ func (h *PostHandler) GetPostLikes(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusOK, "Resource Retrievied Successfully", response)
+	_response.Success(c, http.StatusOK, "Likes Retrieved Successfully", response)
 }
 
 func (h *PostHandler) CommentPost(c *gin.Context) {
@@ -144,7 +144,7 @@ func (h *PostHandler) CommentPost(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusCreated, "Resource Created Successfully", response)
+	_response.Success(c, http.StatusCreated, "Comment Created Successfully", response)
 }
 
 func (h *PostHandler) GetPostComments(c *gin.Context) {
@@ -156,7 +156,7 @@ func (h *PostHandler) GetPostComments(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusOK, "Resource Retrievied Successfully", response)
+	_response.Success(c, http.StatusOK, "Comments Retrieved Successfully", response)
 }
 
 func (h *PostHandler) DeleteComment(c *gin.Context) {
@@ -169,5 +169,5 @@ func (h *PostHandler) DeleteComment(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
+	_response.Success(c, http.StatusNoContent, "Comment Deleted Successfully", nil)
 }

@@ -33,7 +33,7 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusCreated, "Resource Created Successfully", response)
+	_response.Success(c, http.StatusCreated, "Organization Created Successfully", response)
 }
 
 func (h *OrganizationHandler) GetOrganizationById(c *gin.Context) {
@@ -45,7 +45,7 @@ func (h *OrganizationHandler) GetOrganizationById(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusFound, "Resource Successfully Retrieved", response)
+	_response.Success(c, http.StatusFound, "Organization Retrieved Successfully", response)
 }
 
 func (h *OrganizationHandler) GetAllOrganizations(c *gin.Context) {
@@ -55,7 +55,7 @@ func (h *OrganizationHandler) GetAllOrganizations(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusOK, "Resources Successfully Retrievied", response)
+	_response.Success(c, http.StatusOK, "Organizations Retrieved Successfully", response)
 }
 
 func (h *OrganizationHandler) UpdateOrganizations(c *gin.Context) {
@@ -75,7 +75,7 @@ func (h *OrganizationHandler) UpdateOrganizations(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusOK, "Resource Updated Successfully", response)
+	_response.Success(c, http.StatusOK, "Organization Updated Successfully", response)
 }
 
 func (h *OrganizationHandler) DeleteOrganization(c *gin.Context) {
@@ -88,7 +88,7 @@ func (h *OrganizationHandler) DeleteOrganization(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusNoContent, "Resource Deleted Successfully", nil)
+	_response.Success(c, http.StatusNoContent, "Organization Deleted Successfully", nil)
 }
 
 func (h *OrganizationHandler) Follow(c *gin.Context) {
@@ -126,14 +126,14 @@ func (h *OrganizationHandler) GetFollowers(c *gin.Context) {
 		return
 	}
 
-	_response.Success(c, http.StatusOK, "Resource Retrieved Successfully", response)
+	_response.Success(c, http.StatusOK, "Followers Retrieved Successfully", response)
 }
 
 func (h *OrganizationHandler) GetCategories(c *gin.Context) {
 	data, err := h.serv.GetCategories()
 	if err != nil {
-		response.FailOrError(c, 500, "Failed getting categories", err)
+		_response.FailOrError(c, 500, "Failed getting categories", err)
 		return
 	}
-	response.Success(c, 200, "Success getting categories", data)
+	_response.Success(c, 200, "Categories Retrieved Successfully", data)
 }
