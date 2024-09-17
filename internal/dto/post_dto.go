@@ -18,34 +18,24 @@ type CommentPostRequest struct {
 type PostResponse struct {
 	ID           string            `json:"id"`
 	Content      string            `json:"content"`
-	ImageContent string            `json:"image_content,omitempty"`
+	ImageContent string            `json:"image_content"`
 	CreatedAt    time.Time         `json:"created_at"`
 	UpdatedAt    time.Time         `json:"updated_at"`
-	Organization *WithOrganization `json:"organization,omitempty"`
-	Likes        int               `json:"likes"`
-	Comments     int               `json:"comments"`
+	Likes        int               `json:"likes_count"`
+	Comments     int               `json:"comments_count"`
+	Organization *withOrganization `json:"organization"`
 }
 
 type PostLikesResponse struct {
-	UserID     string    `json:"user_id"`
-	Username   string    `json:"username"`
-	ProfileImg string    `json:"profile_img"`
-	LikedAt    time.Time `json:"liked_at"`
+	LikedAt time.Time `json:"liked_at"`
+	User    *withUser `json:"user"`
 }
 
 type PostCommentsResponse struct {
-	ID         string    `json:"id"`
-	UserID     string    `json:"user_id"`
-	Username   string    `json:"username"`
-	ProfileImg string    `json:"profile_img"`
-	Content    string    `json:"content"`
-	CreatedAt  time.Time `json:"created_at"`
-}
-
-type WithOrganization struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	ProfileImg string `json:"profile_img,omitempty"`
+	ID        string    `json:"id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	User      *withUser `json:"user"`
 }
 
 func ToPostResponse(post *sqlc.FindPostByIdRow) *PostResponse {
@@ -55,7 +45,7 @@ func ToPostResponse(post *sqlc.FindPostByIdRow) *PostResponse {
 		ImageContent: post.ImageContent.String,
 		CreatedAt:    post.CreatedAt.Time,
 		UpdatedAt:    post.UpdatedAt.Time,
-		Organization: &WithOrganization{
+		Organization: &withOrganization{
 			ID:         post.OrganizationID,
 			Name:       post.Name,
 			ProfileImg: post.ProfileImg.String,
@@ -74,7 +64,7 @@ func ToPostResponses(posts *[]sqlc.FindPostByIdRow) []PostResponse {
 			ImageContent: post.ImageContent.String,
 			CreatedAt:    post.CreatedAt.Time,
 			UpdatedAt:    post.UpdatedAt.Time,
-			Organization: &WithOrganization{
+			Organization: &withOrganization{
 				ID:         post.OrganizationID,
 				Name:       post.Name,
 				ProfileImg: post.ProfileImg.String,
@@ -93,10 +83,12 @@ func ToPostLikesResponse(postLikes *[]sqlc.FindPostLikesRow) []PostLikesResponse
 	postLikesResponses := []PostLikesResponse{}
 	for _, pl := range *postLikes {
 		postLikeResponse := PostLikesResponse{
-			UserID:     pl.UserID,
-			Username:   pl.Name,
-			ProfileImg: pl.Img.String,
-			LikedAt:    pl.LikedAt.Time,
+			User: &withUser{
+				ID:         pl.UserID,
+				Username:   pl.Name,
+				ProfileImg: pl.Img.String,
+			},
+			LikedAt: pl.LikedAt.Time,
 		}
 
 		postLikesResponses = append(postLikesResponses, postLikeResponse)
@@ -109,12 +101,14 @@ func ToPostCommentsResponse(postComments *[]sqlc.FindPostCommentsRow) []PostComm
 	postCommentsResponses := []PostCommentsResponse{}
 	for _, pc := range *postComments {
 		postCommentResponse := PostCommentsResponse{
-			ID:         pc.ID,
-			UserID:     pc.UserID,
-			Username:   pc.Name,
-			ProfileImg: pc.Img.String,
-			Content:    pc.Content,
-			CreatedAt:  pc.CreatedAt.Time,
+			ID: pc.ID,
+			User: &withUser{
+				ID:         pc.UserID,
+				Username:   pc.Name,
+				ProfileImg: pc.Img.String,
+			},
+			Content:   pc.Content,
+			CreatedAt: pc.CreatedAt.Time,
 		}
 
 		postCommentsResponses = append(postCommentsResponses, postCommentResponse)
