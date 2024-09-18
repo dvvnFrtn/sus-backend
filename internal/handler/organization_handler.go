@@ -137,3 +137,16 @@ func (h *OrganizationHandler) GetCategories(c *gin.Context) {
 	}
 	_response.Success(c, 200, "Categories Retrieved Successfully", data)
 }
+
+func (h *OrganizationHandler) GetFollowedOrganizations(c *gin.Context) {
+	auth, _ := c.Get("user")
+	claims := auth.(*dto.UserClaims)
+
+	response, err := h.serv.GetFollowedOrganizations(claims.ID)
+	if err != nil {
+		_response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	_response.Success(c, http.StatusOK, "Organizations Retrieved Successfully", response)
+}

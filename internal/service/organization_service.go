@@ -16,6 +16,7 @@ type OrganizationService interface {
 	CreateOrganization(string, dto.OrganizationCreateRequest) (*dto.ResponseID, error)
 	GetOrganizationById(string) (*dto.OrganizationResponse, error)
 	GetAllOrganizations() ([]dto.OrganizationResponse, error)
+	GetFollowedOrganizations(string) ([]dto.OrganizationResponse, error)
 	UpdateOrganization(string, string, dto.OrganizationUpdateRequest) (*dto.ResponseID, error)
 	DeleteOrganization(string, string) error
 	Follow(string, string) error
@@ -230,4 +231,14 @@ func (s *organizationService) GetCategories() ([]sqlc.Category, error) {
 		return nil, err
 	}
 	return categories, nil
+}
+
+func (s *organizationService) GetFollowedOrganizations(authID string) ([]dto.OrganizationResponse, error) {
+	organizations, err := s.repo.FindFollowedOrganizations(authID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, _error.ErrInternal
+	}
+
+	return dto.ToOrganizationResponses(&organizations), nil
 }

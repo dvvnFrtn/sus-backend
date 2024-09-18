@@ -19,6 +19,7 @@ type OrganizationRepository interface {
 	GetFollowers(string) ([]sqlc.FindOrganizaitonFollowersRow, error)
 	GetCategories() ([]sqlc.Category, error)
 	GetCategoriesForUser(string) ([]sqlc.Category, error)
+	FindFollowedOrganizations(string) ([]sqlc.Organization, error)
 }
 
 type organizationRepository struct {
@@ -76,4 +77,8 @@ func (r *organizationRepository) GetCategories() ([]sqlc.Category, error) {
 
 func (r *organizationRepository) GetCategoriesForUser(id string) ([]sqlc.Category, error) {
 	return r.db.GetCategoriesForUser(context.Background(), id)
+}
+
+func (r *organizationRepository) FindFollowedOrganizations(id string) ([]sqlc.Organization, error) {
+	return r.db.FindFollowedOrganizations(context.Background(), id)
 }

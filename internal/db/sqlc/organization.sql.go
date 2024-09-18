@@ -46,6 +46,44 @@ func (q *Queries) DeleteOrganization(ctx context.Context, id string) error {
 	return err
 }
 
+const findFollowedOrganizations = `-- name: FindFollowedOrganizations :many
+SELECT o.id, o.name, o.description, o.header_img, o.profile_img, o.created_at, o.updated_at, o.user_id FROM organizations o
+INNER JOIN followers f ON o.id = f.organization_id
+WHERE f.follower_id = ?
+`
+
+func (q *Queries) FindFollowedOrganizations(ctx context.Context, followerID string) ([]Organization, error) {
+	rows, err := q.db.QueryContext(ctx, findFollowedOrganizations, followerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Organization
+	for rows.Next() {
+		var i Organization
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.HeaderImg,
+			&i.ProfileImg,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findOrganizaitonFollowers = `-- name: FindOrganizaitonFollowers :many
 SELECT f.follower_id, u.name, u.img, f.followed_at
 FROM followers f
