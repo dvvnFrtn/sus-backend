@@ -13,8 +13,8 @@ import (
 
 const createEvent = `-- name: CreateEvent :execresult
 INSERT INTO events (
-    id, organization_id, title, description,
-    max_registrant, date
+    id, organization_id, title,
+    description, max_registrant, date
 ) VALUES (?, ?, ?, ?, ?, ?)
 `
 
@@ -35,6 +35,35 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (sql.R
 		arg.Description,
 		arg.MaxRegistrant,
 		arg.Date,
+	)
+}
+
+const createEventAgenda = `-- name: CreateEventAgenda :execresult
+INSERT INTO event_agendas (
+    id, event_id, title, description,
+    start_time, end_time, location
+) VALUES (?, ?, ?, ?, ?, ?, ?)
+`
+
+type CreateEventAgendaParams struct {
+	ID          string
+	EventID     string
+	Title       sql.NullString
+	Description sql.NullString
+	StartTime   sql.NullTime
+	EndTime     sql.NullTime
+	Location    sql.NullString
+}
+
+func (q *Queries) CreateEventAgenda(ctx context.Context, arg CreateEventAgendaParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createEventAgenda,
+		arg.ID,
+		arg.EventID,
+		arg.Title,
+		arg.Description,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Location,
 	)
 }
 

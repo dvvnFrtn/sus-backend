@@ -1,7 +1,7 @@
 -- name: CreateEvent :execresult
 INSERT INTO events (
-    id, organization_id, title, description,
-    max_registrant, date
+    id, organization_id, title,
+    description, max_registrant, date
 ) VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: GetEventByID :one
@@ -33,6 +33,12 @@ VALUES (?, ?, ?);
 
 -- name: GetEventPricings :many
 SELECT * FROM event_pricings WHERE event_id = ?;
+
+-- name: CreateEventAgenda :execresult
+INSERT INTO event_agendas (
+    id, event_id, title, description,
+    start_time, end_time, location
+) VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetAgendasByEventID :many
 SELECT * FROM event_agendas WHERE event_id = ?;

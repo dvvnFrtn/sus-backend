@@ -14,7 +14,9 @@ type EventRepository interface {
 	DeleteEvent(string) error
 	GetPricingsForEvent(string) ([]sqlc.EventPricing, error)
 	CreateEventPricing(sqlc.CreateEventPricingParams) (sql.Result, error)
-	GetSpeakersForEvent(string) ([]sqlc.Speaker, error)
+	GetAgendasByEventID(string) ([]sqlc.EventAgenda, error)
+	CreateEventAgenda(sqlc.CreateEventAgendaParams) (sql.Result, error)
+	GetSpeakersForAgenda(string) ([]sqlc.Speaker, error)
 	CreateSpeaker(sqlc.CreateSpeakerParams) (sql.Result, error)
 }
 
@@ -54,8 +56,16 @@ func (r *eventRepository) CreateEventPricing(input sqlc.CreateEventPricingParams
 	return r.db.CreateEventPricing(context.Background(), input)
 }
 
-func (r *eventRepository) GetSpeakersForEvent(agenda_id string) ([]sqlc.Speaker, error) {
-	return r.db.GetSpeakersByEventID(context.Background(), agenda_id)
+func (r *eventRepository) GetAgendasByEventID(id string) ([]sqlc.EventAgenda, error) {
+	return r.db.GetAgendasByEventID(context.Background(), id)
+}
+
+func (r *eventRepository) CreateEventAgenda(input sqlc.CreateEventAgendaParams) (sql.Result, error) {
+	return r.db.CreateEventAgenda(context.Background(), input)
+}
+
+func (r *eventRepository) GetSpeakersForAgenda(agenda_id string) ([]sqlc.Speaker, error) {
+	return r.db.GetSpeakersByAgendaID(context.Background(), agenda_id)
 }
 
 func (r *eventRepository) CreateSpeaker(input sqlc.CreateSpeakerParams) (sql.Result, error) {

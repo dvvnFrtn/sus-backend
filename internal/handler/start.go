@@ -48,7 +48,11 @@ func route(r *gin.Engine, uh *UserHandler, oh *OrganizationHandler, ph *PostHand
 	r.GET("/events", eh.GetEvents)
 	r.GET("/events/:id", eh.GetEventByID)
 	r.POST("/events", middleware.ValidateToken("organization"), eh.AddEvent)
-	r.DELETE("events/:id", middleware.ValidateToken("organization"), eh.DeleteEvent)
+	r.DELETE("/events/:id", middleware.ValidateToken("organization"), eh.DeleteEvent)
+	r.GET("/events/:id/pricings", eh.GetPricingsByEventID)
+	r.GET("/events/:id/agendas", eh.GetAgendasByEventID)
+	r.POST("/events/:id/agendas", middleware.ValidateToken("organization"), eh.CreateAgenda)
+	r.GET("/events/:eventid/agendas/:agendaid/speakers", eh.GetSpeakersByAgendaID)
 
 	r.GET("/activities/:id", ah.GetActivityByID)
 	r.GET("/organizations/:id/activities", ah.GetActivitiesByOrganizationID)
