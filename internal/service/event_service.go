@@ -20,9 +20,12 @@ type EventService interface {
 	GetEventByID(string) (*dto.EventResponse, error)
 	CreateEvent(string, dto.CreateEventReq) (*dto.ResponseID, error)
 	DeleteEvent(string, string) error
+	CreateEventAgenda(string, dto.CreateAgendaReq) (*dto.ResponseID, error)
 	GetPricingsForEvent(string) ([]dto.PricingResponse, error)
-	CreateEventPricing(dto.PricingCreateReq, string) (*dto.ResponseID, error)
-	GetSpeakersForEvent(string) ([]dto.SpeakerResponse, error)
+	GetAgendasByEventID(string) ([]dto.AgendaResponse, error)
+	CreateEventPricing(string, dto.PricingCreateReq) (*dto.ResponseID, error)
+	GetSpeakersForAgenda(string) ([]dto.SpeakerResponse, error)
+	CreateSpeaker(string, dto.SpeakerCreateReq) (*dto.ResponseID, error)
 }
 
 type eventService struct {
@@ -39,21 +42,7 @@ func (s *eventService) GetEvents() ([]dto.EventResponse, error) {
 		return nil, err
 	}
 
-	eventResponses := []dto.EventResponse{}
-	for _, event := range events {
-		pricings, err := s.repo.GetPricingsForEvent(event.ID)
-		if err != nil {
-			return nil, err
-		}
-		speakers, err := s.repo.GetSpeakersForEvent(event.ID)
-		if err != nil {
-			return nil, err
-		}
-		eventResponse := dto.ToEventResponse(&event, &pricings, &speakers)
-		eventResponses = append(eventResponses, *eventResponse)
-	}
-
-	return eventResponses, nil
+	return dto.ToEventResponses(&events), nil
 }
 
 func (s *eventService) GetEventByID(id string) (*dto.EventResponse, error) {
@@ -65,23 +54,7 @@ func (s *eventService) GetEventByID(id string) (*dto.EventResponse, error) {
 		return nil, err
 	}
 
-	pricings, err := s.repo.GetPricingsForEvent(event.ID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("pricing resources not found")
-		}
-		return nil, err
-	}
-
-	speakers, err := s.repo.GetSpeakersForEvent(event.ID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("speakers resources not found")
-		}
-		return nil, err
-	}
-
-	return dto.ToEventResponse(&event, &pricings, &speakers), nil
+	return dto.ToEventResponse(&event), nil
 }
 
 func (s *eventService) CreateEvent(id string, arg dto.CreateEventReq) (*dto.ResponseID, error) {
@@ -89,17 +62,6 @@ func (s *eventService) CreateEvent(id string, arg dto.CreateEventReq) (*dto.Resp
 	if err != nil {
 		return nil, err
 	}
-	startTime, err := time.Parse("15:04", arg.StartTime)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := time.Parse("15:04", arg.EndTime)
-	if err != nil {
-		return nil, err
-	}
-
-	startTime = time.Date(date.Year(), date.Month(), date.Day(), startTime.Hour(), startTime.Minute(), 0, 0, time.Local)
-	endTime = time.Date(date.Year(), date.Month(), date.Day(), endTime.Hour(), endTime.Minute(), 0, 0, time.Local)
 
 	input := sqlc.CreateEventParams{
 		ID:             uuid.New().String(),
@@ -108,8 +70,6 @@ func (s *eventService) CreateEvent(id string, arg dto.CreateEventReq) (*dto.Resp
 		Description:    sql.NullString{String: arg.Description, Valid: arg.Description != ""},
 		MaxRegistrant:  sql.NullInt32{Int32: arg.MaxRegistrant, Valid: true},
 		Date:           date,
-		StartTime:      sql.NullTime{Time: startTime, Valid: !startTime.IsZero()},
-		EndTime:        sql.NullTime{Time: endTime, Valid: !endTime.IsZero()},
 	}
 
 	_, err = s.repo.CreateEvent(input)
@@ -161,7 +121,7 @@ func (s *eventService) GetPricingsForEvent(event_id string) ([]dto.PricingRespon
 	return dto.ToPricingResponses(&pricings), nil
 }
 
-func (s *eventService) CreateEventPricing(arg dto.PricingCreateReq, event_id string) (*dto.ResponseID, error) {
+func (s *eventService) CreateEventPricing(event_id string, arg dto.PricingCreateReq) (*dto.ResponseID, error) {
 	input := sqlc.CreateEventPricingParams{
 		EventID:   event_id,
 		EventType: sql.NullString{String: arg.EventType, Valid: true},
@@ -180,8 +140,50 @@ func (s *eventService) CreateEventPricing(arg dto.PricingCreateReq, event_id str
 	return dto.NewResponseID(strconv.FormatInt(idRet, 10)), nil
 }
 
-func (s *eventService) GetSpeakersForEvent(event_id string) ([]dto.SpeakerResponse, error) {
-	speakers, err := s.repo.GetSpeakersForEvent(event_id)
+func (s *eventService) GetAgendasByEventID(event_id string) ([]dto.AgendaResponse, error) {
+	agendas, err := s.repo.GetAgendasByEventID(event_id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("resources not found")
+		}
+		return nil, err
+	}
+	return dto.ToAgendaResponses(&agendas), nil
+}
+
+func (s *eventService) CreateEventAgenda(event_id string, arg dto.CreateAgendaReq) (*dto.ResponseID, error) {
+	startTime, err := time.Parse("2006-01-02 15:04", arg.StartTime)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := time.Parse("2006-01-02 15:04", arg.EndTime)
+	if err != nil {
+		return nil, err
+	}
+
+	startTime = time.Date(startTime.Year(), startTime.Month(), startTime.Day(), startTime.Hour(), startTime.Minute(), 0, 0, time.Local)
+	endTime = time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endTime.Hour(), endTime.Minute(), 0, 0, time.Local)
+
+	input := sqlc.CreateEventAgendaParams{
+		ID:          uuid.New().String(),
+		EventID:     event_id,
+		Title:       sql.NullString{String: arg.Title, Valid: true},
+		Description: sql.NullString{String: arg.Description, Valid: true},
+		StartTime:   sql.NullTime{Time: startTime, Valid: !startTime.IsZero()},
+		EndTime:     sql.NullTime{Time: endTime, Valid: !endTime.IsZero()},
+		Location:    sql.NullString{String: arg.Location, Valid: true},
+	}
+
+	_, err = s.repo.CreateEventAgenda(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.NewResponseID(input.ID), nil
+}
+
+func (s *eventService) GetSpeakersForAgenda(agenda_id string) ([]dto.SpeakerResponse, error) {
+	speakers, err := s.repo.GetSpeakersForAgenda(agenda_id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("resources not found")
@@ -191,12 +193,12 @@ func (s *eventService) GetSpeakersForEvent(event_id string) ([]dto.SpeakerRespon
 	return dto.ToSpeakerResponses(&speakers), nil
 }
 
-func (s *eventService) CreateSpeaker(arg dto.SpeakerCreateReq, event_id string) (*dto.ResponseID, error) {
+func (s *eventService) CreateSpeaker(agenda_id string, arg dto.SpeakerCreateReq) (*dto.ResponseID, error) {
 	input := sqlc.CreateSpeakerParams{
 		ID:          uuid.New().String(),
-		EventID:     sql.NullString{String: event_id, Valid: true},
+		AgendaID:    agenda_id,
 		Name:        arg.Name,
-		Title:       sql.NullString{String: arg.Name, Valid: arg.Title != ""},
+		Title:       sql.NullString{String: arg.Name, Valid: true},
 		Description: sql.NullString{String: arg.Description, Valid: true},
 	}
 

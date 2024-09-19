@@ -18,11 +18,9 @@ type EventResponse struct {
 	EndTime        time.Time
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	Speakers       []SpeakerResponse
-	Pricings       []PricingResponse
 }
 
-func ToEventResponse(event *sqlc.Event, pricings *[]sqlc.EventPricing, speakers *[]sqlc.Speaker) *EventResponse {
+func ToEventResponse(event *sqlc.Event) *EventResponse {
 	return &EventResponse{
 		ID:             event.ID,
 		OrganizationID: event.OrganizationID,
@@ -32,12 +30,8 @@ func ToEventResponse(event *sqlc.Event, pricings *[]sqlc.EventPricing, speakers 
 		Registrant:     event.Registrant.Int32,
 		MaxRegistrant:  event.MaxRegistrant.Int32,
 		Date:           event.Date,
-		StartTime:      event.StartTime.Time,
-		EndTime:        event.EndTime.Time,
 		CreatedAt:      event.CreatedAt.Time,
 		UpdatedAt:      event.UpdatedAt.Time,
-		Pricings:       ToPricingResponses(pricings),
-		Speakers:       ToSpeakerResponses(speakers),
 	}
 }
 
@@ -53,8 +47,6 @@ func ToEventResponses(events *[]sqlc.Event) []EventResponse {
 			Registrant:     event.Registrant.Int32,
 			MaxRegistrant:  event.MaxRegistrant.Int32,
 			Date:           event.Date,
-			StartTime:      event.StartTime.Time,
-			EndTime:        event.EndTime.Time,
 			CreatedAt:      event.CreatedAt.Time,
 			UpdatedAt:      event.UpdatedAt.Time,
 		}
@@ -115,9 +107,49 @@ type PricingCreateReq struct {
 	Price     int32  `json:"price"`
 }
 
+type AgendaResponse struct {
+	ID          string    `json:"id"`
+	EventID     string    `json:"event_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+	Location    string    `json:"location"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func ToAgendaResponses(agendas *[]sqlc.EventAgenda) []AgendaResponse {
+	agendaResponses := []AgendaResponse{}
+	for _, agenda := range *agendas {
+		agendaResponse := AgendaResponse{
+			ID:          agenda.ID,
+			EventID:     agenda.EventID,
+			Title:       agenda.Title.String,
+			Description: agenda.Description.String,
+			StartTime:   agenda.StartTime.Time,
+			EndTime:     agenda.EndTime.Time,
+			Location:    agenda.Location.String,
+			CreatedAt:   agenda.CreatedAt.Time,
+			UpdatedAt:   agenda.UpdatedAt.Time,
+		}
+
+		agendaResponses = append(agendaResponses, agendaResponse)
+	}
+	return agendaResponses
+}
+
+type CreateAgendaReq struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	StartTime   string `json:"start_time"`
+	EndTime     string `json:"end_time"`
+	Location    string `json:"location"`
+}
+
 type SpeakerResponse struct {
 	ID          string
-	EventID     string
+	AgendaID    string
 	Name        string
 	Title       string
 	Img         string
@@ -129,7 +161,7 @@ type SpeakerResponse struct {
 func ToSpeakerResponse(speaker sqlc.Speaker) *SpeakerResponse {
 	return &SpeakerResponse{
 		ID:          speaker.ID,
-		EventID:     speaker.EventID.String,
+		AgendaID:    speaker.AgendaID,
 		Name:        speaker.Name,
 		Title:       speaker.Title.String,
 		Img:         speaker.Img.String,
@@ -144,7 +176,7 @@ func ToSpeakerResponses(speakers *[]sqlc.Speaker) []SpeakerResponse {
 	for _, speaker := range *speakers {
 		speakerResponse := SpeakerResponse{
 			ID:          speaker.ID,
-			EventID:     speaker.EventID.String,
+			AgendaID:    speaker.AgendaID,
 			Name:        speaker.Name,
 			Title:       speaker.Title.String,
 			Img:         speaker.Img.String,

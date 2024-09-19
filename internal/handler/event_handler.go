@@ -81,3 +81,70 @@ func (h *EventHandler) DeleteEvent(c *gin.Context) {
 	}
 	response.Success(c, http.StatusOK, "Resource Deleted Successfully", nil)
 }
+
+func (h *EventHandler) GetPricingsByEventID(c *gin.Context) {
+	idReq := c.Param("id")
+	data, err := h.serv.GetPricingsForEvent(idReq)
+	if err != nil {
+		response.FailOrError(c, http.StatusNotFound, err.Error(), err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Speakers retrieved successfully", data)
+}
+
+func (h *EventHandler) GetAgendasByEventID(c *gin.Context) {
+	idReq := c.Param("id")
+	data, err := h.serv.GetAgendasByEventID(idReq)
+	if err != nil {
+		response.FailOrError(c, http.StatusNotFound, err.Error(), err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Agendas retrieved successfully", data)
+}
+
+func (h *EventHandler) CreateAgenda(c *gin.Context) {
+	idReq := c.Param("id")
+	var req dto.CreateAgendaReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailOrError(c, http.StatusBadRequest, "invalid request", err)
+		return
+	}
+
+	resultID, err := h.serv.CreateEventAgenda(idReq, req)
+	if err != nil {
+		response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	response.Success(c, http.StatusCreated, "Resource created successfully", resultID)
+}
+
+func (h *EventHandler) GetSpeakersByAgendaID(c *gin.Context) {
+	idReq := c.Param("agendaid")
+	data, err := h.serv.GetSpeakersForAgenda(idReq)
+	if err != nil {
+		response.FailOrError(c, http.StatusNotFound, err.Error(), err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Speakers retrieved successfully", data)
+}
+
+func (h *EventHandler) CreateSpeaker(c *gin.Context) {
+	idReq := c.Param("agendaid")
+	var req dto.SpeakerCreateReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailOrError(c, http.StatusBadRequest, "invalid request", err)
+		return
+	}
+
+	resultID, err := h.serv.CreateSpeaker(idReq, req)
+	if err != nil {
+		response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	response.Success(c, http.StatusCreated, "Resource created successfully", resultID)
+}
