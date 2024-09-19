@@ -19,15 +19,21 @@ type OrganizationResponse struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	HeaderImg   string    `json:"header_img"`
+	ProfileImg  string    `json:"profile_img"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type OrganizationFollowersResponse struct {
-	FollowerID string    `json:"follower_id"`
-	Username   string    `json:"username"`
-	ProfileImg string    `json:"profile_img"`
 	FollowedAt time.Time `json:"followed_at"`
+	User       *withUser `json:"user"`
+}
+
+type withOrganization struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	ProfileImg string `json:"profile_img"`
 }
 
 func ToOrganizationResponse(organization *sqlc.Organization) *OrganizationResponse {
@@ -35,6 +41,8 @@ func ToOrganizationResponse(organization *sqlc.Organization) *OrganizationRespon
 		ID:          organization.ID,
 		Name:        organization.Name,
 		Description: organization.Description,
+		HeaderImg:   organization.HeaderImg.String,
+		ProfileImg:  organization.ProfileImg.String,
 		CreatedAt:   organization.CreatedAt.Time,
 		UpdatedAt:   organization.UpdatedAt.Time,
 	}
@@ -47,6 +55,8 @@ func ToOrganizationResponses(organizations *[]sqlc.Organization) []OrganizationR
 			ID:          organization.ID,
 			Name:        organization.Name,
 			Description: organization.Description,
+			HeaderImg:   organization.HeaderImg.String,
+			ProfileImg:  organization.ProfileImg.String,
 			CreatedAt:   organization.CreatedAt.Time,
 			UpdatedAt:   organization.UpdatedAt.Time,
 		}
@@ -61,9 +71,11 @@ func ToOrganizationFollowersResponse(followers *[]sqlc.FindOrganizaitonFollowers
 	followersResponses := []OrganizationFollowersResponse{}
 	for _, follower := range *followers {
 		followersResponse := OrganizationFollowersResponse{
-			FollowerID: follower.FollowerID,
-			Username:   follower.Name,
-			ProfileImg: follower.Img.String,
+			User: &withUser{
+				ID:         follower.FollowerID,
+				Username:   follower.Name,
+				ProfileImg: follower.Img.String,
+			},
 			FollowedAt: follower.FollowedAt.Time,
 		}
 

@@ -47,6 +47,12 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
+type withUser struct {
+	ID         string `json:"id"`
+	Username   string `json:"username"`
+	ProfileImg string `json:"profile_img"`
+}
+
 func NewUserClaims(id string, role string, org_id string, exp time.Duration) UserClaims {
 	return UserClaims{
 		ID:             id,
