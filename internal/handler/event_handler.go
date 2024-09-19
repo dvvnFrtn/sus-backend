@@ -118,7 +118,7 @@ func (h *EventHandler) CreateAgenda(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusCreated, "Agenda created successfully", resultID)
+	response.Success(c, http.StatusCreated, "Resource created successfully", resultID)
 }
 
 func (h *EventHandler) GetSpeakersByAgendaID(c *gin.Context) {
@@ -130,4 +130,21 @@ func (h *EventHandler) GetSpeakersByAgendaID(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, "Speakers retrieved successfully", data)
+}
+
+func (h *EventHandler) CreateSpeaker(c *gin.Context) {
+	idReq := c.Param("agendaid")
+	var req dto.SpeakerCreateReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailOrError(c, http.StatusBadRequest, "invalid request", err)
+		return
+	}
+
+	resultID, err := h.serv.CreateSpeaker(idReq, req)
+	if err != nil {
+		response.FailOrError(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	response.Success(c, http.StatusCreated, "Resource created successfully", resultID)
 }
